@@ -1,5 +1,6 @@
 import rospy 
 import math
+import time
 #from we_r2_robot import RobotWeR2
 from osp import OSP
 from moveit_msgs.msg import ExecuteTrajectoryActionGoal
@@ -12,19 +13,29 @@ actuators = ["a0", "a1", "a1", "a1", "a1", "a1"]
 ORM_PARTS_IN_ANGLE = 16000
 ORM_MIDDLE_ANGLE = ORM_PARTS_IN_ANGLE/2
 
-#orm = OSP("/dev/usbserial")
+orm = OSP("/dev/ttyACM1")
 
+STATUS_CHECK_TIMEOUT = 0.05 # Seconds
+MAX_WAIT_ITERATION = 20*1  # Corresponds to 1 second
 
 def apply_trajectory(joint_names, points):
     print("Applying Trajectory: "+str(points))
     for point in points:
-    	# CHECK IF BUSY
-    	# if orm.is_running() is not True: 
-      	for i in range(0,len(point.positions)):
-      	    position = point.positions[i]
-      	    angle_parts = ORM_MIDDLE_ANGLE + int(ORM_PARTS_IN_ANGLE * position / (math.pi * 2))
-      	    # orm.set_angle(i, angle_parts)
-      	    print("JOINT_"+str(i)+" POSITION = "+str(angle_parts))
+        # CHECK IF BUSY
+        wait_counter = 0
+        while orm.orm_is_running() is True: 
+            print("ORM IS RUNNING")
+            time.sleep(STATUS_CHECK_TIMEOUT)
+            wait_counter = wait_counter + 1
+            if wait_counter > MAX_WAIT_ITERATION:
+                print("ORM. Error. Timeout for waiting to achieve the position. Applying the next point")
+                break
+        
+        for i in range(0,len(point.positions)):
+            position = point.positions[i]
+            angle_parts = ORM_MIDDLE_ANGLE + int(ORM_PARTS_IN_ANGLE * position / (math.pi * 2))
+            orm.set_angle(i, int(angle_parts))
+            print("JOINT_"+str(i)+" POSITION = "+str(angle_parts))
       	    
 
 def joint_states_callback(msg):
