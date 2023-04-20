@@ -114,7 +114,7 @@ void ORM::ormInfoCurrentAngle(int actuatorNo){
 
 void ORM::ormInfoCurrentSpeed(int actuatorNo){
   ospPrepareOutputBuffer();  
-  short int speed = joints[0]->speed();// j_speed_current[actuatorNo];
+  short int speed = joints[actuatorNo]->speed();// j_speed_current[actuatorNo];
 
   osp_output_buffer[OSP_MSG_DEV_INDEX] = OSP_DEV_ORM;
   osp_output_buffer[OSP_MSG_CMD_INDEX] = OSP_ORM_INFO_SPEED;
@@ -125,23 +125,52 @@ void ORM::ormInfoCurrentSpeed(int actuatorNo){
   Serial.write(osp_output_buffer, OSP_COMMAND_LENGTH);
 }
 
+void ORM::ormInfoJointStatus(int actuatorNo) {
+  short int status_word = 0;
+  // Forming the status byte
+  int powered = 1; // STUB VALUE. TO BE READ IN LATER RELEASES
+  int error = 0; // STUB VALUE. TO BE READ IN LATER RELEASES
+
+  status_word = status_word | (joints[actuatorNo]->isRunning() << OSP_ORM_JOINT_STATUS_RUNNING_BIT_INDEX);
+  status_word = status_word | (powered << OSP_ORM_JOINT_STATUS_POWERED_BIT_INDEX);
+  status_word = status_word | (error << OSP_ORM_JOINT_STATUS_ERROR_BIT_INDEX);
+
+  // Forming the output buffer
+  ospPrepareOutputBuffer(); 
+
+  osp_output_buffer[OSP_MSG_DEV_INDEX] = OSP_DEV_ORM;
+  osp_output_buffer[OSP_MSG_CMD_INDEX] = OSP_ORM_INFO_JOINT_STATE;
+  osp_output_buffer[OSP_BYTE_PARAM_INDEX] = actuatorNo;
+  osp_output_buffer[OSP_ORM_STATUS_LSB_INDEX] = status_word & 0xFF;
+  osp_output_buffer[OSP_ORM_STATUS_MSB_INDEX] = status_word >> 8;
+
+  Serial.write(osp_output_buffer, OSP_COMMAND_LENGTH);
+}
+
 void ORM::sendUpdateInfo(){
   unsigned long current_millis = millis();
   if (current_millis - last_millis > UPDATE_INTERVAL){
-    ormInfoCurrentAngle(0);
-    ormInfoCurrentSpeed(0);
+    for (int i=0;i<JOINTS_COUNT;i++){
+      ormInfoCurrentAngle(i);
+      ormInfoCurrentSpeed(i);
+      ormInfoJointStatus(i);
+    }
     last_millis = current_millis;
   }
 }
 
-void ORM::updateActuatorsPosition(){
-
-  
+void ORM::updateActuatorsPosition(){  
   for (int i=0;i<JOINTS_COUNT;i++){
-    j_angle_current[i] = ((long)analogRead(ORM_J_ENCODER_INPUT[i])) * (long)orm_j_stepper_full_rot[i] / (long)orm_j_encoder_range;
+    j_angle_read[i] = ((long)analogRead(ORM_J_ENCODER_INPUT[i])) * (long)orm_j_stepper_full_rot[i] / (long)orm_j_encoder_range;
     if(!joints[i]->isRunning()){
-      if(abs(j_angle_current[i] - j_angle_desired[i])> 150) {
-        joints[i]->move((j_angle_desired[i] - j_angle_current[i]) / 2);
+      if(abs(j_angle_current[i] - j_angle_desired[i])>0) {
+        joints[i]->move(j_angle_desired[i] - j_angle_current[i]);
+        j_angle_current[i] = j_angle_desired[i];
+      } else {
+        if(fabs(j_angle_read[i]-j_angle_current[i])>600){
+          // If encoder value differs too much - from the expected value - make the correction
+          joints[i]->move(j_angle_current[i]-j_angle_read[i]);
+        }
       }
     }
   }

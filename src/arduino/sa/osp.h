@@ -10,6 +10,8 @@
 #define OSP_ORM_ANGLE_LSB_INDEX   5 
 #define OSP_ORM_SPEED_MSB_INDEX   6
 #define OSP_ORM_SPEED_LSB_INDEX   5 
+#define OSP_ORM_STATUS_MSB_INDEX  6
+#define OSP_ORM_STATUS_LSB_INDEX  5 
 
 #define OSP_DEV_GENERIC       0 
 #define OSP_DEV_ORM           1 // Open Robotic Manipulator
@@ -33,6 +35,12 @@
 #define OSP_ORM_CMD_SET_SPEED     0x03
 #define OSP_ORM_INFO_ANGLE        0x12
 #define OSP_ORM_INFO_SPEED        0x13
+#define OSP_ORM_INFO_JOINT_STATE  0x14
+
+
+#define OSP_ORM_JOINT_STATUS_RUNNING_BIT_INDEX  0
+#define OSP_ORM_JOINT_STATUS_POWERED_BIT_INDEX  1
+#define OSP_ORM_JOINT_STATUS_ERROR_BIT_INDEX    2
 
 #define OSP_DEV_CURRENT           OSP_DEV_ORM
 

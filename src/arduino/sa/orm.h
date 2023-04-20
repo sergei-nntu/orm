@@ -8,7 +8,7 @@
 #define JOINTS_COUNT              2
 
 // Update Interval in Milliseconds
-#define UPDATE_INTERVAL  1000
+#define UPDATE_INTERVAL  66 // 15 Hz
 
 // Convenience sign function
 #define sgn(x) ((x) < 0 ? -1 : ((x) > 0 ? 1 : 0))
@@ -24,6 +24,7 @@ class ORM {
     AccelStepper*   joints[JOINTS_COUNT];
     short j_angle_desired[JOINTS_COUNT] = {8000,8000};
     short j_angle_current[JOINTS_COUNT] = {8000,8000};
+    short j_angle_read[JOINTS_COUNT] = {8000,8000};
     /*
     short j_speed_current[JOINTS_COUNT] = {0,};
     short j_goal_achieved[JOINTS_COUNT] = {16,};  
@@ -46,6 +47,7 @@ class ORM {
     void ospPrepareOutputBuffer();
     void ormInfoCurrentAngle(int actuatorNo);
     void ormInfoCurrentSpeed(int actuatorNo);
+    void ormInfoJointStatus(int actuatorNo);
 
     unsigned long last_millis; 
 
