@@ -72,8 +72,14 @@ class OSP:
     voltage = 0
     current = 0
     
-    current_angle = 0
-    current_speed = 0
+    # JOINT MEASUREMENTS
+    joint_angle = [0,0,0,0,0,0,0]
+    joint_speed = [0,0,0,0,0,0,0]
+    
+    # JOINT STATUS FLAGS
+    joint_status_powered = [0,0,0,0,0,0,0]
+    joint_status_running = [0,0,0,0,0,0,0]
+    joint_status_error = [0,0,0,0,0,0,0]
     
     
     def __init__(self,port_name):
@@ -151,7 +157,7 @@ class OSP:
     def orm_info_angle(self):
         actuator_no = self.input_buffer[4]
         angle = self.input_buffer[5] | (self.input_buffer[6] << 8)
-        self.current_angle = angle
+        self.joint_angle[actuator_no] = angle
 #        if actuator_no == 5:
         #print("Current Angle For Actuator "+str(actuator_no)+" is "+str(angle))
    
@@ -160,7 +166,7 @@ class OSP:
         speed = self.input_buffer[5] | (self.input_buffer[6] << 8)
         if speed & 0x8000 !=0:
             speed = -((~speed & 0xffff) + 1)
-        self.current_speed = speed
+        self.joint_speed[actuator_no] = speed
         #print("Current Speed For Actuator "+str(actuator_no)+" is "+str(speed))
     
     def extract_bit_with_index(self, word, bit_index):
@@ -174,8 +180,14 @@ class OSP:
         powered = self.extract_bit_with_index(status_word, OSP_ORM_JOINT_STATUS_POWERED_BIT_INDEX)
         error = self.extract_bit_with_index(status_word, OSP_ORM_JOINT_STATUS_ERROR_BIT_INDEX)
         
+        self.joint_status_running[actuator_no] = running
+        self.joint_status_powered[actuator_no] = powered
+        self.joint_status_error[actuator_no] = error
         #print("JOINT "+str(actuator_no)+ " RUNNING = "+str(running)+"; POWERED = "+str(powered)+"; ERROR = "+str(error))
         
+    
+    def orm_is_running(self):
+        return 1 in self.joint_status_running
         
     def orm_set_angle(self, joint, angle):
         print("Setting Angle to ORM joint"+str(joint)+": "+str(angle))
