@@ -5,6 +5,7 @@ import math
 import threading
 import glob
 import sys
+from symbol import power
 
 # OSP DATA INDICIES WITHIN THE MESSAGE
 
@@ -44,6 +45,11 @@ OSP_ORM_CMD_SET_ANGLE = 0x02
 OSP_ORM_CMD_SET_SPEED = 0x03
 OSP_ORM_INFO_ANGLE = 0x12
 OSP_ORM_INFO_SPEED = 0x13
+OSP_ORM_INFO_STATUS = 0x14
+
+OSP_ORM_JOINT_STATUS_RUNNING_BIT_INDEX = 0
+OSP_ORM_JOINT_STATUS_POWERED_BIT_INDEX = 1
+OSP_ORM_JOINT_STATUS_ERROR_BIT_INDEX =   2
 
 OSP_DEV_CURRENT = OSP_DEV_OBP
 
@@ -142,18 +148,33 @@ class OSP:
         self.voltage = v
         #print("V: "+str(v)+" mV")
 
-    def info_current_angle(self):
+    def orm_info_angle(self):
         actuator_no = self.input_buffer[4]
         angle = self.input_buffer[5] | (self.input_buffer[6] << 8)
         self.current_angle = angle
 #        if actuator_no == 5:
         #print("Current Angle For Actuator "+str(actuator_no)+" is "+str(angle))
    
-    def info_current_speed(self):
+    def orm_info_speed(self):
         actuator_no = self.input_buffer[4]
         speed = self.input_buffer[5] | (self.input_buffer[6] << 8)
+        if speed & 0x8000 !=0:
+            speed = -((~speed & 0xffff) + 1)
         self.current_speed = speed
         #print("Current Speed For Actuator "+str(actuator_no)+" is "+str(speed))
+    
+    def extract_bit_with_index(self, word, bit_index):
+        return (word & (1 << bit_index)) >> bit_index
+        
+    def orm_info_status(self):  
+        actuator_no = self.input_buffer[4]
+        status_word = self.input_buffer[5] | (self.input_buffer[6] << 8)
+        
+        running = self.extract_bit_with_index(status_word, OSP_ORM_JOINT_STATUS_RUNNING_BIT_INDEX)
+        powered = self.extract_bit_with_index(status_word, OSP_ORM_JOINT_STATUS_POWERED_BIT_INDEX)
+        error = self.extract_bit_with_index(status_word, OSP_ORM_JOINT_STATUS_ERROR_BIT_INDEX)
+        
+        #print("JOINT "+str(actuator_no)+ " RUNNING = "+str(running)+"; POWERED = "+str(powered)+"; ERROR = "+str(error))
         
         
     def orm_set_angle(self, joint, angle):
@@ -181,9 +202,11 @@ class OSP:
                                     self.osp_obp_info_voltage()
                             if self.input_buffer[OSP_MSG_DEV_INDEX] == OSP_DEV_ORM:
                                 if self.input_buffer[OSP_MSG_CMD_INDEX] ==  OSP_ORM_INFO_ANGLE:
-                                    self.info_current_angle();
+                                    self.orm_info_angle();
                                 if self.input_buffer[OSP_MSG_CMD_INDEX] == OSP_ORM_INFO_SPEED:
-                                    self.info_current_speed();
+                                    self.orm_info_speed();
+                                if self.input_buffer[OSP_MSG_CMD_INDEX] == OSP_ORM_INFO_STATUS:
+                                    self.orm_info_status();
                             if self.input_buffer[OSP_MSG_DEV_INDEX] == OSP_DEV_GENERIC:
                                 if self.input_buffer[OSP_MSG_CMD_INDEX] == OSP_INFO_DEV_TYPE:
                                     self.osp_info_dev_type()

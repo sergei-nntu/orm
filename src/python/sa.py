@@ -38,12 +38,14 @@ class ArmOne:
     def info_current_angle(self):
         actuator_no = self.input_buffer[3]
         angle = self.input_buffer[4] | (self.input_buffer[5] << 8)
+        print("Current Angle For Actuator "+str(actuator_no)+" is "+str(angle))
 #        if actuator_no == 5:
 #            print("Current Angle For Actuator "+str(actuator_no)+" is "+str(angle))
    
     def info_current_speed(self):
         actuator_no = self.input_buffer[3]
         speed = self.input_buffer[4] | (self.input_buffer[5] << 8)
+        print("Current Speed For Actuator "+str(actuator_no)+" is "+str(speed))
         #print("Current Speed For Actuator "+str(actuator_no)+" is "+str(speed))
     
     def input_thread(self):
@@ -57,7 +59,7 @@ class ArmOne:
                     self.input_buffer[self.input_index] = bt
                     self.input_index += 1
                     if self.input_index >= len(self.command_buffer_pattern):
-                        #print("Command Received:"+str(self.input_buffer))
+                        print("Command Received:"+str(self.input_buffer))
                         if self.input_buffer[2] ==  ARM1_INFO_CURRENT_ANGLE:
                             self.info_current_angle()
                         if self.input_buffer[2] ==  ARM1_INFO_CURRENT_SPEED:
