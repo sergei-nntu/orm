@@ -43,6 +43,7 @@ OSP_ORM_ANGLE_LSB_INDEX = 5
 
 OSP_ORM_CMD_SET_ANGLE = 0x02
 OSP_ORM_CMD_SET_SPEED = 0x03
+OSP_ORM_CMD_SET_CORR_ANGLE= 0x05
 OSP_ORM_INFO_ANGLE = 0x12
 OSP_ORM_INFO_SPEED = 0x13
 OSP_ORM_INFO_STATUS = 0x14
@@ -56,6 +57,8 @@ OSP_DEV_CURRENT = OSP_DEV_OBP
 OSP_COMMAND_LENGTH = 10
 OSP_BUFFER_SIZE = 10
 
+
+ORM_INT_ANGLE_MAX = 16384
 
 class OSP:
     command_buffer_pattern = [ 0xFF, 0xAA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x55, 0x77]
@@ -121,6 +124,15 @@ class OSP:
         cmd_bytes = self.command_buffer_pattern.copy()
         cmd_bytes[OSP_MSG_DEV_INDEX] = OSP_DEV_ORM
         cmd_bytes[OSP_MSG_CMD_INDEX] = OSP_ORM_CMD_SET_ANGLE
+        cmd_bytes[OSP_ORM_JOINT_INDEX] = joint
+        cmd_bytes[OSP_ORM_ANGLE_MSB_INDEX] = (angle >> 8) &0xff
+        cmd_bytes[OSP_ORM_ANGLE_LSB_INDEX] = angle & 0xff
+        self.osp_send_command(cmd_bytes)
+        
+    def set_corr_angle(self,joint,angle):
+        cmd_bytes = self.command_buffer_pattern.copy()
+        cmd_bytes[OSP_MSG_DEV_INDEX] = OSP_DEV_ORM
+        cmd_bytes[OSP_MSG_CMD_INDEX] = OSP_ORM_CMD_SET_CORR_ANGLE
         cmd_bytes[OSP_ORM_JOINT_INDEX] = joint
         cmd_bytes[OSP_ORM_ANGLE_MSB_INDEX] = (angle >> 8) &0xff
         cmd_bytes[OSP_ORM_ANGLE_LSB_INDEX] = angle & 0xff
@@ -191,6 +203,8 @@ class OSP:
         
     def orm_set_angle(self, joint, angle):
         print("Setting Angle to ORM joint"+str(joint)+": "+str(angle))
+        int_angle = angle * ORM_INT_ANGLE_MAX / (2* math.pi)
+        self.set_angle(joint, int_angle)
     
     def input_thread(self):
         while self.closed is not True:
