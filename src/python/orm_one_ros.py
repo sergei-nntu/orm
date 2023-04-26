@@ -10,9 +10,6 @@ JOINT_NAMES = ['joint0', 'joint1', 'joint2',
 
 actuators = ["a0", "a1", "a1", "a1", "a1", "a1"]
 
-ORM_PARTS_IN_ANGLE = 16000
-ORM_MIDDLE_ANGLE = ORM_PARTS_IN_ANGLE/2
-
 orm = OSP("/dev/ttyACM1")
 
 STATUS_CHECK_TIMEOUT = 0.05 # Seconds
@@ -33,9 +30,8 @@ def apply_trajectory(joint_names, points):
         
         for i in range(0,len(point.positions)):
             position = point.positions[i]
-            angle_parts = ORM_MIDDLE_ANGLE + int(ORM_PARTS_IN_ANGLE * position / (math.pi * 2))
-            orm.set_angle(i, int(angle_parts))
-            print("JOINT_"+str(i)+" POSITION = "+str(angle_parts))
+            orm.set_angle(i, position)
+            print("JOINT_"+str(i)+" POSITION = "+str(position))
       	    
 
 def joint_states_callback(msg):

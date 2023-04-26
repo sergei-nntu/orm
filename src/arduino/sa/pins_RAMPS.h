@@ -39,9 +39,9 @@
 #define TEMP_1_PIN          14   // ANALOG NUMBERING
 
 // AS5600 Encoder Input
-#define X_ENCODER_IN      A3
+#define X_ENCODER_IN      A5
 #define Y_ENCODER_IN      A4
-#define Z_ENCODER_IN      A5
+#define Z_ENCODER_IN      A3
 #define E0_ENCODER_IN     A9
 #define E1_ENCODER_IN     A10
 

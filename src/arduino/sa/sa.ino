@@ -1,3 +1,5 @@
+#include <EEPROM.h>
+
 #include <AccelStepper.h>
 #include "orm.h"
 
