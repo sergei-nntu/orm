@@ -57,7 +57,7 @@ OSP_COMMAND_LENGTH = 10
 OSP_BUFFER_SIZE = 10
 
 
-ORM_INT_ANGLE_MAX = 16384
+ORM_INT_ANGLE_MAX = 65536/2
 
 class OSP:
     command_buffer_pattern = [ 0xFF, 0xAA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x55, 0x77]

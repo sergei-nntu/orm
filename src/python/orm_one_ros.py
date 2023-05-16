@@ -8,7 +8,7 @@ from moveit_msgs.msg import ExecuteTrajectoryActionGoal
 JOINT_NAMES = ['joint0', 'joint1', 'joint2',
                'joint3', 'joint4', 'joint5']
 
-actuators = ["a0", "a1", "a1", "a1", "a1", "a1"]
+actuators = ["a0", "a1", "a2", "a3", "a4", "a5"]
 
 orm = OSP("/dev/ttyACM1")
 
@@ -30,7 +30,7 @@ def apply_trajectory(joint_names, points):
         
         for i in range(0,len(point.positions)):
             position = point.positions[i]
-            orm.set_angle(i, position)
+            orm.orm_set_angle(i, position)
             print("JOINT_"+str(i)+" POSITION = "+str(position))
       	    
 
