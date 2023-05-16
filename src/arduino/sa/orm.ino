@@ -4,11 +4,12 @@
 AccelStepper j0(1,X_STEP_PIN,X_DIR_PIN);
 AccelStepper j1(1,Y_STEP_PIN,Y_DIR_PIN);
 AccelStepper j2(1,Z_STEP_PIN,Z_DIR_PIN);
+AccelStepper j3(1,E_STEP_PIN,E_DIR_PIN);
 
 const char osp_command_template[] = {0xFF, 0xAA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x55, 0x77};
 
-const int ORM_J_ENCODER_INPUT[JOINTS_COUNT] = {X_ENCODER_IN,Y_ENCODER_IN, Z_ENCODER_IN} ;/*A1,A2,A3,A4,A5};*/
-const int ORM_J_ENABLE_PIN[JOINTS_COUNT] =    {X_ENABLE_PIN,Y_ENABLE_PIN, Z_ENABLE_PIN};/*7,10,13,16,19};*/
+const int ORM_J_ENCODER_INPUT[JOINTS_COUNT] = {X_ENCODER_IN,Y_ENCODER_IN, Z_ENCODER_IN, E_ENCODER_IN} ;/*A1,A2,A3,A4,A5};*/
+const int ORM_J_ENABLE_PIN[JOINTS_COUNT] =    {X_ENABLE_PIN,Y_ENABLE_PIN, Z_ENABLE_PIN, E_ENABLE_PIN} ;/*7,10,13,16,19};*/
 /*
 const short orm_j_angle_min = 0;
 const short orm_j_angle_max = 1023;
@@ -102,7 +103,7 @@ void ORM::ospPrepareOutputBuffer(){
 void ORM::ormInfoCurrentAngle(int actuatorNo){
   ospPrepareOutputBuffer();
     
-  unsigned int angle = j_angle_current[actuatorNo]; 
+  unsigned int angle = j_angle_read[actuatorNo]; 
 
   osp_output_buffer[OSP_MSG_DEV_INDEX] = OSP_DEV_ORM;
   osp_output_buffer[OSP_MSG_CMD_INDEX] = OSP_ORM_INFO_ANGLE;
@@ -264,6 +265,7 @@ void ORM::setup(){
   joints[0] = &j0;
   joints[1] = &j1;
   joints[2] = &j2;
+  joints[3] = &j3;
   for (int i=0;i<JOINTS_COUNT;i++) {
    // INIT JOINT
    joints[i]->setEnablePin(ORM_J_ENABLE_PIN[i]);
@@ -276,7 +278,10 @@ void ORM::setup(){
    // LOAD CORRECTION ANGLE
    EEPROM.get(i*sizeof(short),j_angle_correction[i]); 
    // Set the current angle to the correction one. As it corresponds to the initial position of the actuator
-   j_angle_current[i] = j_angle_correction[i] % orm_max_int_angle;
+   // Possibly the negative value should be stated here
+   // Or no action at all?
+   //j_angle_current[i] = j_angle_correction[i] % orm_max_int_angle;
+   j_angle_current[i]  = 0;
  }
 
 }
