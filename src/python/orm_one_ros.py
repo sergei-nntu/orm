@@ -11,26 +11,36 @@ actuators = ["a0", "a1", "a2", "a3", "a4", "a5"]
 
 orm = OSP("/dev/ttyACM1")
 
-STATUS_CHECK_TIMEOUT = 0.05 # Seconds // 20 times per second
-MAX_WAIT_ITERATION = 20*1  # Corresponds to 1 second
+STATUS_CHECK_TIMEOUT = 0.2 # Seconds # 5 Hz
+MAX_WAIT_ITERATION = 1*1  # Corresponds to 1 second
+
+TIME_SCALE_FACTOR = 3.0
 
 def apply_trajectory(joint_names, points):
     print("Applying Trajectory: "+str(points))
+    prev_time = 0.0
     for point in points:
         # CHECK IF BUSY
         wait_counter = 0
-        while orm.orm_is_running() is True: 
-            print("ORM IS RUNNING")
-            time.sleep(STATUS_CHECK_TIMEOUT)
-            wait_counter = wait_counter + 1
-            if wait_counter > MAX_WAIT_ITERATION:
-                print("ORM. Error. Timeout for waiting to achieve the position. Applying the next point")
-                break
+        #while orm.orm_is_running() is True: 
+        #    print("ORM IS RUNNING")
+        #    time.sleep(STATUS_CHECK_TIMEOUT)
+        #    wait_counter = wait_counter + 1
+        #    if wait_counter > MAX_WAIT_ITERATION:
+        #        print("ORM. Error. Timeout for waiting to achieve the position. Applying the next point")
+        #        break
         
+        curr_time = point.time_from_start.secs + point.time_from_start.nsecs * 1e-9;
+        print("CURR TIME:" + str(curr_time))
+        time_diff = curr_time - prev_time
+        print("TIME DIFF:" + str(time_diff))
+        time.sleep(time_diff * TIME_SCALE_FACTOR)
         for i in range(0,len(point.positions)):
             position = point.positions[i]
             orm.orm_set_angle(i, position)
             print("JOINT_"+str(i)+" POSITION = "+str(position))
+        prev_time = curr_time    
+       
       	    
 
 def joint_states_callback(msg):
