@@ -10,7 +10,7 @@
 #define STAT_SAMPLE_SIZE          1
 
 // Update Interval in Milliseconds
-#define UPDATE_INTERVAL  500 // 4 Hz
+#define UPDATE_INTERVAL  100 // 10 Hz
 
 // Convenience sign function
 #define sgn(x) ((x) < 0 ? -1 : ((x) > 0 ? 1 : 0))
