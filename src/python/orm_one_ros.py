@@ -5,14 +5,13 @@ import time
 from osp import OSP
 from moveit_msgs.msg import ExecuteTrajectoryActionGoal
 
-JOINT_NAMES = ['joint0', 'joint1', 'joint2',
-               'joint3', 'joint4', 'joint5']
+JOINT_NAMES = ['joint0', 'joint1', 'joint2', 'joint3', 'joint4', 'joint5']
 
 actuators = ["a0", "a1", "a2", "a3", "a4", "a5"]
 
 orm = OSP("/dev/ttyACM1")
 
-STATUS_CHECK_TIMEOUT = 0.05 # Seconds
+STATUS_CHECK_TIMEOUT = 0.05 # Seconds // 20 times per second
 MAX_WAIT_ITERATION = 20*1  # Corresponds to 1 second
 
 def apply_trajectory(joint_names, points):
