@@ -213,7 +213,14 @@ class OSP:
         print("Setting Angle to ORM joint"+str(joint)+": "+str(angle))
         int_angle = -int(angle * ORM_INT_ANGLE_MAX / (2* math.pi))
         self.set_angle(joint, int_angle)
-    
+        
+    def orm_set_speed(self, joint, speed): # In Radians/Sec
+        if speed > 0: # Sanity Check
+            int_speed =  int(ORM_INT_ANGLE_MAX * speed / (2*math.pi))
+            self.set_speed(joint, int_speed)
+        
+        
+        
     def input_thread(self):
         while self.closed is not True:
             try:
