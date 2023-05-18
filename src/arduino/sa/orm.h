@@ -28,6 +28,7 @@ class ORM {
 
     // STEPPER CONTROL VARIABLES
     AccelStepper*   joints[JOINTS_COUNT];
+    short j_speed_desired[JOINTS_COUNT] =   {500, 500, 500, 500}; // Default Speed 11.25 degrees second. Must be populated in the constructor
     short j_angle_desired[JOINTS_COUNT] =   {0, 0, 0, 0};
     short j_angle_current[JOINTS_COUNT] =   {0, 0, 0, 0};
     short j_angle_read[JOINTS_COUNT] =      {0, 0, 0, 0};

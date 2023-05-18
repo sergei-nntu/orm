@@ -24,7 +24,16 @@ void ORM::ospHandleGenericCommand(){
 }
 
 void ORM::cmdSetSpeed(){
+  int actuator_no = osp_input_buffer[OSP_BYTE_PARAM_INDEX];
+  int speed = ((int)(osp_input_buffer[OSP_ORM_ANGLE_MSB_INDEX]) << 8) | osp_input_buffer[OSP_ORM_ANGLE_LSB_INDEX];
 
+  if (actuator_no >=0 && actuator_no<JOINTS_COUNT){
+    if(speed>0) { // Sanity Check
+      j_speed_desired[actuator_no] = speed;
+      // Setting the speed to joint in steps per second
+      joints[actuator_no]->setMaxSpeed((long)j_speed_desired[actuator_no] * (long)orm_j_stepper_full_rot[actuator_no] / (long)orm_max_int_angle);
+    }
+  }
 }
 /*
 void ORM::cmdSetAngle(){
@@ -273,7 +282,10 @@ void ORM::setup(){
    //joints[i]->disableOutputs();
    joints[i]->setAcceleration(200000); // 200 steps per second per second
    joints[i]->enableOutputs();
-   joints[i]->setMaxSpeed(500);
+   // Populate desired speed
+   j_speed_desired[i] = (long)orm_max_int_angle * (long)500 /(long)orm_j_stepper_full_rot[i];
+   // Set speed in steps/second
+   joints[i]->setMaxSpeed((long)j_speed_desired[i] * (long)orm_j_stepper_full_rot[i] / (long)orm_max_int_angle);
    //joints[i]->setSpeed(100);
    // LOAD CORRECTION ANGLE
    EEPROM.get(i*sizeof(short),j_angle_correction[i]); 
