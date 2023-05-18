@@ -128,6 +128,15 @@ class OSP:
         cmd_bytes[OSP_ORM_ANGLE_LSB_INDEX] = angle & 0xff
         self.osp_send_command(cmd_bytes)
         
+    def set_speed(self, joint, speed):
+        cmd_bytes = self.command_buffer_pattern.copy()
+        cmd_bytes[OSP_MSG_DEV_INDEX] = OSP_DEV_ORM
+        cmd_bytes[OSP_MSG_CMD_INDEX] = OSP_ORM_CMD_SET_SPEED
+        cmd_bytes[OSP_ORM_JOINT_INDEX] = joint
+        cmd_bytes[OSP_ORM_ANGLE_MSB_INDEX] = (speed >> 8) &0xff
+        cmd_bytes[OSP_ORM_ANGLE_LSB_INDEX] = speed & 0xff
+        self.osp_send_command(cmd_bytes)
+        
     def set_corr_angle(self,joint,angle):
         cmd_bytes = self.command_buffer_pattern.copy()
         cmd_bytes[OSP_MSG_DEV_INDEX] = OSP_DEV_ORM
