@@ -9,17 +9,21 @@ JOINT_NAMES = ['joint0', 'joint1', 'joint2', 'joint3', 'joint4', 'joint5']
 
 actuators = ["a0", "a1", "a2", "a3", "a4", "a5"]
 
-orm = OSP("/dev/ttyACM1")
+orm = OSP("/dev/ttyACM2")
 
 STATUS_CHECK_TIMEOUT = 0.2 # Seconds # 5 Hz
 MAX_WAIT_ITERATION = 1*1  # Corresponds to 1 second
 
-TIME_SCALE_FACTOR = 3.0
+TIME_SCALE_FACTOR = 1.0
 
 def apply_trajectory(joint_names, points):
     print("Applying Trajectory: "+str(points))
     prev_time = 0.0
+    prev_point = None
     for point in points:
+        if prev_point is None:
+            prev_point = point
+            continue
         # CHECK IF BUSY
         wait_counter = 0
         #while orm.orm_is_running() is True: 
@@ -37,10 +41,16 @@ def apply_trajectory(joint_names, points):
         time.sleep(time_diff * TIME_SCALE_FACTOR)
         for i in range(0,len(point.positions)):
             position = point.positions[i]
+            prev_position = prev_point.positions[i]
+            speed = (position - prev_position) / (time_diff * TIME_SCALE_FACTOR)
+            orm.orm_set_speed(i, abs(speed))
             orm.orm_set_angle(i, position)
             print("JOINT_"+str(i)+" POSITION = "+str(position))
-        prev_time = curr_time    
-       
+        prev_time = curr_time 
+        prev_point = point   
+        
+    for i in range(0,len(prev_point.positions)): 
+        orm.set_speed(i, 1024) # Angle correction speed  
       	    
 
 def joint_states_callback(msg):
