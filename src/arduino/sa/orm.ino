@@ -5,11 +5,13 @@ AccelStepper j0(1,X_STEP_PIN,X_DIR_PIN);
 AccelStepper j1(1,Y_STEP_PIN,Y_DIR_PIN);
 AccelStepper j2(1,Z_STEP_PIN,Z_DIR_PIN);
 AccelStepper j3(1,E_STEP_PIN,E_DIR_PIN);
+AccelStepper j4(1,Q_STEP_PIN,Q_DIR_PIN);
+AccelStepper j5(1,W_STEP_PIN,W_DIR_PIN);
 
 const char osp_command_template[] = {0xFF, 0xAA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x55, 0x77};
 
-const int ORM_J_ENCODER_INPUT[JOINTS_COUNT] = {X_ENCODER_IN,Y_ENCODER_IN, Z_ENCODER_IN, E_ENCODER_IN} ;/*A1,A2,A3,A4,A5};*/
-const int ORM_J_ENABLE_PIN[JOINTS_COUNT] =    {X_ENABLE_PIN,Y_ENABLE_PIN, Z_ENABLE_PIN, E_ENABLE_PIN} ;/*7,10,13,16,19};*/
+const int ORM_J_ENCODER_INPUT[JOINTS_COUNT] = {X_ENCODER_IN,Y_ENCODER_IN, Z_ENCODER_IN, E_ENCODER_IN, Q_ENCODER_IN, W_ENCODER_IN} ;/*A1,A2,A3,A4,A5};*/
+const int ORM_J_ENABLE_PIN[JOINTS_COUNT] =    {X_ENABLE_PIN,Y_ENABLE_PIN, Z_ENABLE_PIN, E_ENABLE_PIN, Q_ENABLE_PIN, W_ENABLE_PIN} ;/*7,10,13,16,19};*/
 /*
 const short orm_j_angle_min = 0;
 const short orm_j_angle_max = 1023;
@@ -70,6 +72,8 @@ void ORM::cmdSetCorrAngle(){
   if (actuator_no >=0 && actuator_no<JOINTS_COUNT){
     j_angle_correction[actuator_no] = angle;
     EEPROM.put(actuator_no*sizeof(short), (short) angle);
+    j_callibr_left[actuator_no] = 2; // Force the callibration after the angle correction set.
+    
   }
 }
 
@@ -203,7 +207,7 @@ short ORM::readAngle(int actuatorNo){
   }
   // Applying statistical filtering
   // 1. Save the current value
-/*
+
   j_angle_sample[actuatorNo * STAT_SAMPLE_SIZE +read_samples_ptr[actuatorNo]] = gamma_res;
   read_samples_ptr[actuatorNo] ++;
   read_samples_ptr[actuatorNo] %= STAT_SAMPLE_SIZE;
@@ -217,7 +221,7 @@ short ORM::readAngle(int actuatorNo){
     gamma_sum += j_angle_sample[actuatorNo * STAT_SAMPLE_SIZE + i];
   }
   gamma_res = gamma_sum / read_samples_size[actuatorNo];
-  */
+  
   return gamma_res;
 }
 
@@ -231,10 +235,17 @@ void ORM::updateActuatorsPosition(){
         joints[i]->move(steps_to_make);
         j_angle_current[i] = j_angle_desired[i];
       } else {
-        if(fabs(j_angle_read[i]-j_angle_current[i])>orm_j_stepper_full_rot[i]*0.04){
-          // If encoder value differs too much - from the expected value - make the correction
-          long int steps_to_make = (long)(j_angle_current[i] - j_angle_read[i]) * (long)orm_j_stepper_full_rot[i] / orm_max_int_angle;
-          joints[i]->move(steps_to_make);
+        // Only apply the correction if enough data is accumulated
+        if(read_samples_size[i] == STAT_SAMPLE_SIZE) {
+          if(fabs(j_angle_read[i]-j_angle_current[i])>orm_j_stepper_full_rot[i]*0.1) {
+            j_callibr_left[i] = 2; 
+          }
+          if(j_callibr_left[i] >0 && read_samples_size[i] == STAT_SAMPLE_SIZE){
+            // If encoder value differs too much - from the expected value - make the correction
+            long int steps_to_make = (long)(j_angle_current[i] - j_angle_read[i]) * (long)orm_j_stepper_full_rot[i] / orm_max_int_angle;
+            joints[i]->move(steps_to_make);
+            j_callibr_left[i] --;
+          }
         }
       }
     }
@@ -275,6 +286,8 @@ void ORM::setup(){
   joints[1] = &j1;
   joints[2] = &j2;
   joints[3] = &j3;
+  joints[4] = &j4;
+  joints[5] = &j5;  
   for (int i=0;i<JOINTS_COUNT;i++) {
    // INIT JOINT
    joints[i]->setEnablePin(ORM_J_ENABLE_PIN[i]);
@@ -295,7 +308,6 @@ void ORM::setup(){
    //j_angle_current[i] = j_angle_correction[i] % orm_max_int_angle;
    j_angle_current[i]  = 0;
  }
-
 }
 
 ORM::ORM(){

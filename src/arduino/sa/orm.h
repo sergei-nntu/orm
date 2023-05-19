@@ -5,9 +5,9 @@
 #include "osp.h"
 #include "pins_RAMPS.h"
 
-#define JOINTS_COUNT              4
+#define JOINTS_COUNT              6
 
-#define STAT_SAMPLE_SIZE          1
+#define STAT_SAMPLE_SIZE          10
 
 // Update Interval in Milliseconds
 #define UPDATE_INTERVAL  100 // 10 Hz
@@ -17,7 +17,7 @@
 
 const long orm_j_encoder_adc_range = 1024; // Max Value of Encoder ADC output
 const long orm_max_int_angle = 32768;      // Max Positive Value of Integer Angle correspnods to 2*Pi
-const short orm_j_stepper_full_rot[JOINTS_COUNT] = {16000, 16000,16000, 9780};  // Number of steps to reach 2*Pi Angle
+const short orm_j_stepper_full_rot[JOINTS_COUNT] = {16000, 16000,16000, 9780, 9780, 9780};  // Number of steps to reach 2*Pi Angle
 
 class ORM {
   private:
@@ -28,18 +28,19 @@ class ORM {
 
     // STEPPER CONTROL VARIABLES
     AccelStepper*   joints[JOINTS_COUNT];
-    short j_speed_desired[JOINTS_COUNT] =   {500, 500, 500, 500}; // Default Speed 11.25 degrees second. Must be populated in the constructor
-    short j_angle_desired[JOINTS_COUNT] =   {0, 0, 0, 0};
-    short j_angle_current[JOINTS_COUNT] =   {0, 0, 0, 0};
-    short j_angle_read[JOINTS_COUNT] =      {0, 0, 0, 0};
-    short j_angle_correction[JOINTS_COUNT] ={0, 0, 0, 0};
+    short j_speed_desired[JOINTS_COUNT] =   {500, 500, 500, 500, 500, 500}; // Default Speed 11.25 degrees second. Must be populated in the constructor
+    short j_angle_desired[JOINTS_COUNT] =   {0, 0, 0, 0, 0, 0};
+    short j_angle_current[JOINTS_COUNT] =   {0, 0, 0, 0, 0, 0};
+    short j_angle_read[JOINTS_COUNT] =      {0, 0, 0, 0, 0, 0};
+    short j_angle_correction[JOINTS_COUNT] ={0, 0, 0, 0, 0, 0};
+    short j_callibr_left[JOINTS_COUNT] = {2, 2, 2, 2, 2, 2};
 
     // STATISTICAL FILTERING 
 
     short j_angle_sample[JOINTS_COUNT * STAT_SAMPLE_SIZE];
 
-    int read_samples_size[JOINTS_COUNT] = {0,0,0, 0};
-    int read_samples_ptr[JOINTS_COUNT] = {0,0,0,0 };
+    int read_samples_size[JOINTS_COUNT] = {0,0,0,0,0,0};
+    int read_samples_ptr[JOINTS_COUNT] = {0,0,0,0,0,0};
     /*
     short j_speed_current[JOINTS_COUNT] = {0,};
     short j_goal_achieved[JOINTS_COUNT] = {16,};  
