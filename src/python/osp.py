@@ -214,7 +214,7 @@ class OSP:
         
     def orm_set_angle(self, joint, angle):
         print("Setting Angle to ORM joint"+str(joint)+": "+str(angle))
-        int_angle = -int(angle * ORM_INT_ANGLE_MAX / (2* math.pi))
+        int_angle = int(angle * ORM_INT_ANGLE_MAX / (2* math.pi))
         self.set_angle(joint, int_angle)
         
     def orm_set_speed(self, joint, speed): # In Radians/Sec
