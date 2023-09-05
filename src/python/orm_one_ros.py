@@ -1,15 +1,18 @@
 import rospy 
 import math
 import time
+from datetime import datetime
 #from we_r2_robot import RobotWeR2
 from osp import OSP
 from moveit_msgs.msg import ExecuteTrajectoryActionGoal
+from sensor_msgs.msg import JointState
+from std_msgs.msg import Float32
 
 JOINT_NAMES = ['joint0', 'joint1', 'joint2', 'joint3', 'joint4', 'joint5']
 
 actuators = ["a0", "a1", "a2", "a3", "a4", "a5"]
 
-orm = OSP("/dev/ttyACM2")
+orm = OSP("/dev/ttyUSB0")
 
 STATUS_CHECK_TIMEOUT = 0.2 # Seconds # 5 Hz
 MAX_WAIT_ITERATION = 1*1  # Corresponds to 1 second
@@ -53,9 +56,9 @@ def apply_trajectory(joint_names, points):
         orm.set_speed(i, 1024) # Angle correction speed  
       	    
 
-def joint_states_callback(msg):
+def joint_trajectory_callback(msg):
     print(str(msg))
-    apply_trajectory(msg.goal.trajectory.joint_trajectory.joint_names, msg.goal.trajectory.joint_trajectory.points)
+    #apply_trajectory(msg.goal.trajectory.joint_trajectory.joint_names, msg.goal.trajectory.joint_trajectory.points)
     #for joint_name in msg.name:
     #    if joint_name in JOINT_NAMES:
     #        # index of actuator
@@ -70,11 +73,31 @@ def joint_states_callback(msg):
     #        #orm.set_angle(i, angle_parts)
     #        #self.actuators[i].set_angle(self.jointsAng[j])
 
-     
+last_time = datetime.now()
+
+def joint_states_callback(msg):
+    global last_time
+    current_time = datetime.now()
+    delta = current_time - last_time 
+    if delta.total_seconds() > 0.5:
+        last_time = current_time
+        print("JointState: "+str(msg))
+        for i in range(0,len(msg.position)):
+            name = msg.name[i]
+            joint_index = JOINT_NAMES.index(name)
+            orm.orm_set_angle(joint_index, msg.position[i])
+    
+
+def gripper_state_callback(msg):
+    print("gripper angle:",msg.data)
+    orm.orm_set_angle(6, msg.data)
+         
 rospy.init_node("we_r2_control")
 #we_r2 = RobotWeR2()
 
 rospy.Subscriber('/execute_trajectory/goal', ExecuteTrajectoryActionGoal, joint_states_callback)
+rospy.Subscriber('/joint_states', JointState, joint_states_callback)
+rospy.Subscriber('/gripper_state', Float32, gripper_state_callback)
 rospy.spin()
 
    
