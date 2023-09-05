@@ -43,12 +43,12 @@
 #define TEMP_1_PIN          14   // ANALOG NUMBERING
 
 // AS5600 Encoder Input
-#define X_ENCODER_IN      A9
+#define X_ENCODER_IN      A3
 #define Y_ENCODER_IN      A4
 #define Z_ENCODER_IN      A5
 #define E_ENCODER_IN     A12
-#define Q_ENCODER_IN     A10
-#define W_ENCODER_IN     A11
+#define Q_ENCODER_IN     A9
+#define W_ENCODER_IN     A10
 
 #define G0_SERVO_PWM     11
 
