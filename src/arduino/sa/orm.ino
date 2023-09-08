@@ -260,6 +260,21 @@ short ORM::readAngle(int actuatorNo){
   return 0;
 }
 
+int isqrt(int x) {
+    if (x <= 0)
+        return 0;
+
+    int r = x;
+    int y = (r + x / r) / 2;
+
+    while (y < r) {
+        r = y;
+        y = (r + x / r) / 2;
+    }
+
+    return r;
+}
+
 void ORM::updateActuatorsPosition(){  
   // UPDATE THE SPEED FIRST
   unsigned long current_millis = millis();
@@ -272,24 +287,27 @@ void ORM::updateActuatorsPosition(){
       long angle_diff = j_angle_desired[i] - j_angle_current[i];
       long direction = sgn(angle_diff);
 
-      long accelerate_speed = j_speed_current[i] + direction*(long)ORM_ACCELERATION_MAX*(long)ORM_SPEED_UPDATE_INTERVAL_MS / (long)ORM_MS_IN_SECOND;
+      long accelerate_speed = j_speed_current[i] + direction*(long)orm_j_acceleration[i]*(long)ORM_SPEED_UPDATE_INTERVAL_MS / (long)ORM_MS_IN_SECOND;
 
-      long deaccelerate_speed = (long)angle_diff * (long)ORM_ACCELERATION_MAX  / (long)ORM_MS_IN_SECOND; 
+      long abs_angle_diff = angle_diff * direction;
+      long sqrt_angle_diff = isqrt(abs_angle_diff);
+
+      long deaccelerate_speed = (long)direction*(long)sqrt_angle_diff * (long)ORM_SPEED_UPDATE_INTERVAL_MS*(long)orm_j_acceleration[i] / (long)ORM_MS_IN_SECOND; 
       
-      long max_speed = direction * ORM_SPEED_MAX;
+      long max_speed = direction * orm_j_speed_max[i];
 
-      long result_speed = 0;
-      if (direction*max_speed <= direction*accelerate_speed && direction*max_speed <= direction*deaccelerate_speed){
-        result_speed = max_speed;
-      } else if (direction*accelerate_speed <= direction*max_speed && direction*accelerate_speed <= direction*deaccelerate_speed) {
-        result_speed = accelerate_speed;
-      } else {
-        result_speed = deaccelerate_speed;
-      }
-      j_speed_current[i] = result_speed;
+      long result_speed = min(min(direction*max_speed,direction*accelerate_speed),direction*deaccelerate_speed);
+
+      j_speed_current[i] = direction*result_speed;
       
       // Do not limit to the desired angle only. Allow to pass over the desired angle if deacceleration is not possible
-      j_angle_current[i] += (long)j_speed_current[i]*(long)ORM_SPEED_UPDATE_INTERVAL_MS / (long)ORM_MS_IN_SECOND ; // Update the angle
+      long new_angle = (long)j_angle_current[i] + (long)j_speed_current[i]*(long)ORM_SPEED_UPDATE_INTERVAL_MS / (long)ORM_MS_IN_SECOND ;
+      long new_angle_diff = j_angle_desired[i] - new_angle;
+      if(new_angle_diff * angle_diff < 0){
+        j_angle_current[i] = j_angle_desired[i];
+      } else {
+         j_angle_current[i] = new_angle;  // Update the angle
+      }
     }
   }
 

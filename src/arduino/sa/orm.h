@@ -34,6 +34,11 @@ const long orm_max_int_angle = 32768;      // Max Positive Value of Integer Angl
                                                  // ORA-3. ORA-4. ORA-3. ORA-2 ORA-2 ORA-2
 const short orm_j_stepper_full_rot[JOINTS_COUNT] = {16000, 16000 ,16000, 9780, 9780, 9780};  // Number of steps to reach 2*Pi Angle
 
+const short orm_j_speed_max[JOINTS_COUNT] =     {4000, 4000, 4000, 8000, 8000, 8000};
+const short orm_j_speed_min[JOINTS_COUNT] =     {400, 400, 400, 400, 400, 400};
+const short orm_j_acceleration[JOINTS_COUNT] =  {4000, 4000, 4000, 8000, 8000, 8000};
+
+
 class ORM {
   private:
     // OSP COMMUNICATION VARIABLES
