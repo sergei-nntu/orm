@@ -79,7 +79,7 @@ def joint_states_callback(msg):
     global last_time
     current_time = datetime.now()
     delta = current_time - last_time 
-    if delta.total_seconds() > 0.5:
+    if delta.total_seconds() > 0.05:
         last_time = current_time
         print("JointState: "+str(msg))
         for i in range(0,len(msg.position)):
