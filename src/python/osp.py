@@ -175,8 +175,11 @@ class OSP:
         #print("V: "+str(v)+" mV")
 
     def orm_info_angle(self):
+        #print("ORM Info Angle")
         actuator_no = self.input_buffer[4]
         angle = self.input_buffer[5] | (self.input_buffer[6] << 8)
+        if angle & 0x8000 !=0:
+            angle = -((~angle & 0xffff) + 1)
         self.joint_angle[actuator_no] = angle
 #        if actuator_no == 5:
         #print("Current Angle For Actuator "+str(actuator_no)+" is "+str(angle))
