@@ -81,6 +81,8 @@ def convert_pose():
     
     group.set_pose_target(pose_msg)
 
+    group.set_planning_time(0.2)
+
     success = group.go(wait=True)
     
     # Publish Gripper Pose
@@ -88,7 +90,7 @@ def convert_pose():
     gripper_state_msg.data = data["gripper"]
     pub.publish(gripper_state_msg)
     
-    return str(pose_msg)
+    return {"execute": success}
 
 
 
