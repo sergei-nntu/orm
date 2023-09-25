@@ -62,6 +62,7 @@ class ORM {
     short j_angle_correction[JOINTS_COUNT] ={0, 0, 0, 0, 0, 0};
     short j_callibr_left[JOINTS_COUNT] = {2, 2, 2, 2, 2, 2};
     short js_angle_scale_factor[JOINTS_COUNT] = {1024,1024,682,682,1024,682}; // Scale factor to be applied prior to sending the angle to servos
+    short js_small_angle_threshold[JOINTS_COUNT] = {100, 100, 100, 100, 100, 100}; // If the difference between the desired and the current angle does not exceed this value - do not apply the acceleration.
 
     // GRIPPER CONTROL VARIABLES
     short gripper_angle = 0; // INT ANGLE -16384 .. 16383

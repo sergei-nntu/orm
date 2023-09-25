@@ -290,6 +290,13 @@ void ORM::updateActuatorsPosition(){
       long accelerate_speed = j_speed_current[i] + direction*(long)orm_j_acceleration[i]*(long)ORM_SPEED_UPDATE_INTERVAL_MS / (long)ORM_MS_IN_SECOND;
 
       long abs_angle_diff = angle_diff * direction;
+
+      if (abs_angle_diff < js_small_angle_threshold[i]) {
+        j_angle_current[i] = j_angle_desired[i];
+        j_speed_current[i] = 0;
+        continue;        
+      }
+
       long sqrt_angle_diff = isqrt(abs_angle_diff);
 
       long deaccelerate_speed = (long)direction*(long)sqrt_angle_diff * (long)ORM_SPEED_UPDATE_INTERVAL_MS*(long)orm_j_acceleration[i] / (long)ORM_MS_IN_SECOND; 
