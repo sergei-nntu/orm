@@ -26,8 +26,9 @@ const char osp_command_template[] = {0xFF, 0xAA, 0x00, 0x00, 0x00, 0x00, 0x00, 0
 const short orm_j_angle_min = 0;
 const short orm_j_angle_max = 1023;
 */
-const int ORM_J_SERVO_PINS[JOINTS_COUNT] = {4,5,6,3,11,2};
+const int ORM_J_SERVO_PINS[JOINTS_COUNT] = {2,3,4,5,6,7};
 
+const int EEPROM_ANGLE_WIDTH_OFFSET = 32;
 
 //AccelStepper j0(1,X_STEP_PIN,X_DIR_PIN);
 
@@ -86,7 +87,20 @@ void ORM::cmdSetCorrAngle(){
   if (actuator_no >=0 && actuator_no<JOINTS_COUNT){
     j_angle_correction[actuator_no] = angle;
     EEPROM.put(actuator_no*sizeof(short), (short) angle);
-    j_callibr_left[actuator_no] = 2; // Force the callibration after the angle correction set.
+    // LEGACY CODE BENEATH. Callibration was needed for stepper motors, not for servo at the moment. 
+    //j_callibr_left[actuator_no] = 2; // Force the callibration after the angle correction set.
+    
+  }
+}
+
+void ORM::cmdSetAngleWidth(){
+  int actuator_no = osp_input_buffer[OSP_BYTE_PARAM_INDEX];
+  int angle = ((int)(osp_input_buffer[OSP_ORM_ANGLE_MSB_INDEX]) << 8) | osp_input_buffer[OSP_ORM_ANGLE_LSB_INDEX];
+
+  if (actuator_no >=0 && actuator_no<JOINTS_COUNT){
+    j_angle_width[actuator_no] = angle;
+    EEPROM.put(EEPROM_ANGLE_WIDTH_OFFSET+actuator_no*sizeof(short), (short) angle);
+    //j_callibr_left[actuator_no] = 2; // Force the callibration after the angle correction set.
     
   }
 }
@@ -103,6 +117,9 @@ void ORM::ospHandleORMCommand(){
   }
   if (cmd == OSP_ORM_CMD_SET_CORR_ANGLE) {
     cmdSetCorrAngle();
+  }
+  if (cmd == OSP_ORM_CMD_SET_ANGLE_WIDTH) {
+    cmdSetAngleWidth();
   }
 }
 
@@ -345,13 +362,13 @@ void ORM::updateActuatorsPosition(){
     }
     */
     
-    float servo_angle = ((float)(j_angle_current[i]+j_angle_correction[i])*(float)js_angle_scale_factor[i]/ (float)JS_ANGLE_SCALE_FACTOR_DIVISOR)*(float)360/(float)orm_max_int_angle;
+    float servo_angle = ((float)(j_angle_current[i]+j_angle_correction[i])*(float)orm_180_angle_width / (float)j_angle_width[i])*(float)360/(float)orm_max_int_angle;
     joint_servos[i]->write(servo_angle);
+
   }
   // Update Gripper Position
   int servo_angle = (long)gripper_angle * (long)360 / (long)orm_max_int_angle;
   gripper_servo->write(servo_angle);
-
 }
 
 void ORM::ospSerialLoop(){
@@ -403,7 +420,7 @@ void ORM::setup(){
   joint_servos[5] = &js5;
 
   gripper_servo = &gripperServo;
-  gripper_servo->attach(14);
+  gripper_servo->attach(8);
   gripper_servo->write(0);
 
   // Initing Joints Servos 
@@ -427,11 +444,12 @@ void ORM::setup(){
    //joints[i]->setSpeed(100);*/
    // LOAD CORRECTION ANGLE
    EEPROM.get(i*sizeof(short),j_angle_correction[i]); 
-   // Set the current angle to the correction one. As it corresponds to the initial position of the actuator
-   // Possibly the negative value should be stated here
-   // Or no action at all?
-   //j_angle_current[i] = j_angle_correction[i] % orm_max_int_angle;
    j_angle_current[i]  = 0;
+
+   EEPROM.get(EEPROM_ANGLE_WIDTH_OFFSET+i*sizeof(short),j_angle_width[i]); 
+   if(j_angle_width[i]<=0) {
+     j_angle_width[i] = 16384;
+   }
  }
 }
 
