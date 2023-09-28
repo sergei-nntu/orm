@@ -84,15 +84,22 @@ def convert_pose():
     group.set_planning_time(0.2)
 
     success = group.go(wait=True)
-    
-    # Publish Gripper Pose
-    gripper_state_msg = Float32()
-    gripper_state_msg.data = data["gripper"]
-    pub.publish(gripper_state_msg)
-    
+
     return {"execute": success}
 
+@app.route("/set_gripper_state", methods=["POST"])
+def set_gripper_state():
+    data = request.json
 
+    gripper_state_msg = Float32()
+    gripper_state_msg.data = data["gripper"]
+
+    # Publish Gripper Pose
+    pub.publish(gripper_state_msg)
+
+    group.set_planning_time(0.1)
+    success = group.go(wait=True)
+    return {"execute": success}
 
 def main():
     rospy.init_node('moveit_controller')
