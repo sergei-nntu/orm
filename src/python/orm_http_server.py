@@ -109,6 +109,12 @@ def get_current_ip():
 
     return {"ip": s.getsockname()[0]}
 
+@app.route("/set_active_program", methods=["POST"])
+def set_active_program():
+    data = request.json
+    source = data["source"]
+    exec(source);
+
 def main():
     rospy.init_node('moveit_controller')
 
