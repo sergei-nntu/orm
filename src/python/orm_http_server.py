@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import sys
+import socket
 import rospy
 import time
 import moveit_commander
@@ -78,7 +79,7 @@ def convert_pose():
     yaw = data["yaw"]
 
     pose_msg = create_pose_message(x, y, z, pitch, roll, yaw)
-    
+
     group.set_pose_target(pose_msg)
 
     group.set_planning_time(0.2)
@@ -101,13 +102,20 @@ def set_gripper_state():
     success = group.go(wait=True)
     return {"execute": success}
 
+@app.route("/current_ip", methods=["GET"])
+def get_current_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+
+    return {"ip": s.getsockname()[0]}
+
 def main():
     rospy.init_node('moveit_controller')
-    
+
     global pub
-    
+
     pub = rospy.Publisher('/gripper_state', Float32, queue_size = 10)
-    #rospy.spin() 
+    #rospy.spin()
     app.run(host="0.0.0.0", port=5000)
 
 if __name__ == '__main__':
