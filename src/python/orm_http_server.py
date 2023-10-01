@@ -22,6 +22,7 @@ group.set_max_acceleration_scaling_factor(1)
 app = Flask(__name__)
 
 pub = None
+source = None
 
 def detect_tf(data):
     start = time.time()
@@ -109,16 +110,32 @@ def get_current_ip():
 
     return {"ip": s.getsockname()[0]}
 
+@app.route("/start_program", methods=["GET"])
+def start_program():
+    exec(source)
+
+@app.route("/stop_program", methods=["GET"])
+def stop_program():
+    pass
+
+@app.route("/get_active_program", methods=["GET"])
+def get_active_program():
+    pass
+
 @app.route("/set_active_program", methods=["POST"])
 def set_active_program():
     data = request.json
     source = data["source"]
-    exec(source);
+
+@app.route("/get_program_state", methods=["GET"])
+def get_program_state():
+    pass
 
 def main():
     rospy.init_node('moveit_controller')
 
     global pub
+    global source
 
     pub = rospy.Publisher('/gripper_state', Float32, queue_size = 10)
     #rospy.spin()
