@@ -30,8 +30,13 @@
 #define sgn(x) ((x) < 0 ? -1 : ((x) > 0 ? 1 : 0))
 
 const long orm_j_encoder_adc_range = 1024; // Max Value of Encoder ADC output
+
+
 const long orm_max_int_angle = 32768;      // Max Positive Value of Integer Angle correspnods to 2*Pi
                                                  // ORA-3. ORA-4. ORA-3. ORA-2 ORA-2 ORA-2
+
+const long orm_180_angle_width = orm_max_int_angle/2;
+
 const short orm_j_stepper_full_rot[JOINTS_COUNT] = {16000, 16000 ,16000, 9780, 9780, 9780};  // Number of steps to reach 2*Pi Angle
 
 const short orm_j_speed_max[JOINTS_COUNT] =     {4000, 4000, 4000, 8000, 8000, 8000};
@@ -60,6 +65,7 @@ class ORM {
     short j_angle_current[JOINTS_COUNT] =   {0, 0, 0, 0, 0, 0};
     short j_angle_read[JOINTS_COUNT] =      {0, 0, 0, 0, 0, 0};
     short j_angle_correction[JOINTS_COUNT] ={0, 0, 0, 0, 0, 0};
+    short j_angle_width[JOINTS_COUNT] =     {0, 0, 0, 0, 0, 0};
     short j_callibr_left[JOINTS_COUNT] = {2, 2, 2, 2, 2, 2};
     short js_angle_scale_factor[JOINTS_COUNT] = {1024,1024,682,682,1024,682}; // Scale factor to be applied prior to sending the angle to servos
     short js_small_angle_threshold[JOINTS_COUNT] = {100, 100, 100, 100, 100, 100}; // If the difference between the desired and the current angle does not exceed this value - do not apply the acceleration.
@@ -92,6 +98,7 @@ class ORM {
     void cmdSetSpeed();
     void cmdMakeSteps();
     void cmdSetCorrAngle();
+    void cmdSetAngleWidth();
 
     // Outcoming Commands Generation Functinos
     void ospPrepareOutputBuffer();
