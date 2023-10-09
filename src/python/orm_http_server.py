@@ -30,6 +30,7 @@ app = Flask(__name__)
 
 pub = None
 active_block_id = None
+active_blockly_structure = None
 should_terminate_flag = False
 
 def detect_tf(data):
@@ -165,7 +166,8 @@ def stop_program():
 
 @app.route("/get_active_program", methods=["GET"])
 def get_active_program():
-    pass
+    global active_blockly_structure
+    return {"structure": active_blockly_structure}
 
 def insert_code(file_path, dynamic_code):
     try:
@@ -180,8 +182,13 @@ def insert_code(file_path, dynamic_code):
 
 @app.route("/set_active_program", methods=["POST"])
 def set_active_program():
+    global active_blockly_structure
     data = request.json
     source = data["source"]
+    structure = data["structure"]
+    
+    active_blockly_structure = structure
+    print("active_blockly_structure", active_blockly_structure)
     insert_code('program.py', source)
 
 @app.route("/get_program_state", methods=["GET"])
