@@ -213,7 +213,7 @@ class OSP:
         return 1 in self.joint_status_running
         
     def orm_set_angle(self, joint, angle):
-        print("Setting Angle to ORM joint"+str(joint)+": "+str(angle))
+        #print("Setting Angle to ORM joint"+str(joint)+": "+str(angle))
         int_angle = int(angle * ORM_INT_ANGLE_MAX / (2* math.pi))
         self.set_angle(joint, int_angle)
         

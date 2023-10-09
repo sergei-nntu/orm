@@ -80,10 +80,16 @@ def convert_pose():
     pose_msg = create_pose_message(x, y, z, pitch, roll, yaw)
     
     group.set_pose_target(pose_msg)
+    
 
     group.set_planning_time(0.2)
-
-    success = group.go(wait=True)
+    
+    print("Planning...")
+    plan = group.go(wait=True)
+    #group.stop()
+    #group.clear_pose_targets()
+    print("Executing....")
+    group.execute(plan, wait=True)
     
     # Publish Gripper Pose
     gripper_state_msg = Float32()
