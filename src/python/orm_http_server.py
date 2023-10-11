@@ -151,18 +151,19 @@ def start_program():
         imp.reload(program)
         program_thread = threading.Thread(target=program.program_main, args=(should_terminate, set_active_block))
         program_thread.start()
-        print("Program started!")
+        return {"success": True}
     else:
-        print("Program is already running!")
+        return {"success": False}
 
 @app.route("/stop_program", methods=["GET"])
 def stop_program():
     global should_terminate_flag
     if should_terminate_flag:
-        print("Program has been stopped!")
+        return {"success": False}
     else:
         should_terminate_flag = True
-        print("Program stopped!")
+        return {"success": True}
+
 
 @app.route("/get_active_program", methods=["GET"])
 def get_active_program():
@@ -185,11 +186,9 @@ def set_active_program():
     global active_blockly_structure
     data = request.json
     source = data["source"]
-    structure = data["structure"]
-    
-    active_blockly_structure = structure
-    print("active_blockly_structure", active_blockly_structure)
+    active_blockly_structure = data["structure"]
     insert_code('program.py', source)
+    return {"success": True}
 
 @app.route("/get_program_state", methods=["GET"])
 def get_program_state():
