@@ -17,6 +17,7 @@ import imp
 import program
 import textwrap
 import re
+import math
 
 program_thread = None
 
@@ -99,12 +100,16 @@ def set_gripper_state(data):
     
     return {"execute": plan}
 
+def publish_grip_state(state):
+    pub.publish(state)
+    time.sleep(1)
+
 def set_active_block(id):
     global active_block_id
     active_block_id = id
 
 def orm_blockly_set_gripper_state(gripper_state):
-    return set_gripper_state(gripper_state)
+    return round(gripper_state * math.pi / 180, 2)
 
 def orm_blockly_set_position(x, y, z, pitch, roll, yaw):
     return set_pose(x, y, z, pitch, roll, yaw)
@@ -149,7 +154,7 @@ def start_program():
     should_terminate_flag = False
     if program_thread is None or not program_thread.is_alive():
         imp.reload(program)
-        program_thread = threading.Thread(target=program.program_main, args=(should_terminate, set_active_block))
+        program_thread = threading.Thread(target=program.program_main, args=(should_terminate, set_active_block, publish_grip_state))
         program_thread.start()
         return {"success": True}
     else:
@@ -173,7 +178,7 @@ def get_active_program():
 def insert_code(file_path, dynamic_code):
     try:
         code_with_indent = textwrap.indent(dynamic_code, '  ')
-        code = f"from orm_http_server import *\ndef program_main(should_terminate_function, set_active_block_id):\n{code_with_indent}"
+        code = f"from orm_http_server import *\ndef program_main(should_terminate_function, set_active_block_id, publish_grip_state):\n{code_with_indent}"
         
         with open(file_path, 'w') as file:
             file.write(code)
