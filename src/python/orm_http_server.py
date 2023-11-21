@@ -218,7 +218,7 @@ def main():
 
     pub = rospy.Publisher('/gripper_state', Float32, queue_size = 10)
     #rospy.spin()
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5001)
 
 if __name__ == '__main__':
     try:
