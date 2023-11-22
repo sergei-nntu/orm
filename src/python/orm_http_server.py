@@ -12,6 +12,7 @@ from std_msgs.msg import Float32
 from moveit_commander import MoveGroupCommander
 from tf.transformations import quaternion_from_euler
 from flask import Flask, request, jsonify
+from sensor_msgs.msg import JointState
 import threading
 import imp
 import program
@@ -32,6 +33,8 @@ app = Flask(__name__)
 pub = None
 active_block_id = None
 should_terminate_flag = False
+
+JOINT_NAMES = ['joint0', 'joint1', 'joint2', 'joint3', 'joint4', 'joint5']
 
 def detect_tf(data):
     start = time.time()
@@ -57,6 +60,12 @@ def detect_tf(data):
         # group.clear_pose_targets()
         end = time.time()
         print("Time:", end - start)
+
+def joint_states_callback(msg):
+    for i in range(0,len(msg.position)):
+        name = msg.name[i]
+        joint_index = JOINT_NAMES.index(name)
+        print(joint_index, msg.position[i])
 
 def create_pose_message(x, y, z, pitch, roll, yaw):
     pose_msg = Pose()
@@ -217,6 +226,8 @@ def main():
     global pub
 
     pub = rospy.Publisher('/gripper_state', Float32, queue_size = 10)
+    rospy.Subscriber('/joint_states', JointState, joint_states_callback)
+
     #rospy.spin()
     app.run(host="0.0.0.0", port=5000)
 
