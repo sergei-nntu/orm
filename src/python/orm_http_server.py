@@ -12,6 +12,7 @@ from std_msgs.msg import Float32
 from moveit_commander import MoveGroupCommander
 from tf.transformations import quaternion_from_euler
 from flask import Flask, request, jsonify
+from sensor_msgs.msg import JointState
 import threading
 import imp
 import program
@@ -32,6 +33,9 @@ app = Flask(__name__)
 pub = None
 active_block_id = None
 should_terminate_flag = False
+
+JOINT_NAMES = ['joint0', 'joint1', 'joint2', 'joint3', 'joint4', 'joint5']
+JOINTS = {}
 
 def detect_tf(data):
     start = time.time()
@@ -57,6 +61,14 @@ def detect_tf(data):
         # group.clear_pose_targets()
         end = time.time()
         print("Time:", end - start)
+
+def joint_states_callback(msg):
+    for i in range(0,len(msg.position)):
+        name = msg.name[i]
+        position = msg.position[i]
+        JOINTS[name] = position
+        # joint_index = JOINT_NAMES.index(name)
+        # print(joint_index, msg.position[i])
 
 def create_pose_message(x, y, z, pitch, roll, yaw):
     pose_msg = Pose()
@@ -211,12 +223,26 @@ def get_program_state():
     global active_block_id
     return {"id": active_block_id}
 
+@app.route("/get_joints_state", methods=["GET"])
+def get_joints_state():
+    global JOINTS, JOINT_NAMES
+    return {
+        "shoulder": JOINTS[JOINT_NAMES[0]],
+        "upperArm": JOINTS[JOINT_NAMES[1]],
+        "forearm": JOINTS[JOINT_NAMES[2]],
+        "wrist1": JOINTS[JOINT_NAMES[3]],
+        "wrist2": JOINTS[JOINT_NAMES[4]],
+        "endEffectorLink": JOINTS[JOINT_NAMES[5]]
+    }
+
 def main():
     rospy.init_node('moveit_controller')
 
     global pub
 
     pub = rospy.Publisher('/gripper_state', Float32, queue_size = 10)
+    rospy.Subscriber('/joint_states', JointState, joint_states_callback)
+
     #rospy.spin()
     app.run(host="0.0.0.0", port=5001)
 
