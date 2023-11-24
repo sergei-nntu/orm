@@ -31,6 +31,7 @@ group.set_max_acceleration_scaling_factor(1)
 app = Flask(__name__)
 
 pub = None
+pose_state = None
 active_block_id = None
 should_terminate_flag = False
 
@@ -95,6 +96,18 @@ def set_pose(x, y, z, pitch, roll, yaw):
     group.set_planning_time(0.2)
 
     success = group.go(wait=True)
+
+    global pose_state
+    if success:
+        pose_state = {
+            "x": x,
+            "y": y,
+            "z": z,
+            "pitch": pitch,
+            "roll": roll,
+            "yaw": yaw
+        }
+
     return {"execute": success}
 
 def set_gripper_state(data):
@@ -130,6 +143,12 @@ def orm_blockly_delay(ms):
 
 def should_terminate():
     return should_terminate_flag
+
+@app.route("/get_pose_state", methods=["GET"])
+def get_pose_state():
+    global pose_state
+    print(pose_state)
+    return {"data": pose_state}
 
 @app.route("/convert_pose", methods=["POST"])
 def convert_pose():
