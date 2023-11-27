@@ -38,6 +38,9 @@ should_terminate_flag = False
 JOINT_NAMES = ['joint0', 'joint1', 'joint2', 'joint3', 'joint4', 'joint5']
 JOINTS = {}
 
+DOG_JOINT_NAMES = ['joint0', 'joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6', 'joint7', 'joint8', 'joint9', 'joint10', 'joint11']
+DOG_JOINTS = {}
+
 def detect_tf(data):
     start = time.time()
     for m in data.transforms:
@@ -70,6 +73,12 @@ def joint_states_callback(msg):
         JOINTS[name] = position
         # joint_index = JOINT_NAMES.index(name)
         # print(joint_index, msg.position[i])
+
+def dog_joint_states_callback(msg):
+    for i in range(0, len(msg.position)):
+        name = msg.name[i]
+        position = msg.position[i]
+        DOG_JOINTS[name] = position
 
 def create_pose_message(x, y, z, pitch, roll, yaw):
     pose_msg = Pose()
@@ -252,6 +261,24 @@ def get_joints_state():
         "wrist1": JOINTS[JOINT_NAMES[3]],
         "wrist2": JOINTS[JOINT_NAMES[4]],
         "endEffectorLink": JOINTS[JOINT_NAMES[5]]
+    }
+
+@app.route("/get_dog_joints_state", methods=["GET"])
+def get_dog_joints_state():
+    global DOG_JOINTS, DOG_JOINT_NAMES
+    return {
+        "shoulder1": DOG_JOINTS[DOG_JOINT_NAMES[0]],
+        "reductor1": DOG_JOINTS[DOG_JOINT_NAMES[1]],
+        "knee1": DOG_JOINTS[DOG_JOINT_NAMES[2]],
+        "shoulder2": DOG_JOINTS[DOG_JOINT_NAMES[3]],
+        "reductor2": DOG_JOINTS[DOG_JOINT_NAMES[4]],
+        "knee2": DOG_JOINTS[DOG_JOINT_NAMES[5]],
+        "shoulder3": DOG_JOINTS[DOG_JOINT_NAMES[6]],
+        "reductor3": DOG_JOINTS[DOG_JOINT_NAMES[7]],
+        "knee3": DOG_JOINTS[DOG_JOINT_NAMES[8]],
+        "shoulder4": DOG_JOINTS[DOG_JOINT_NAMES[9]],
+        "reductor4": DOG_JOINTS[DOG_JOINT_NAMES[10]],
+        "knee4": DOG_JOINTS[DOG_JOINT_NAMES[11]],
     }
 
 def main():
