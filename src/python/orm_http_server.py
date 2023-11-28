@@ -263,7 +263,7 @@ def get_joints_state():
         "endEffectorLink": JOINTS[JOINT_NAMES[5]]
     }
 
-@app.route("/get_dog_joints_state", methods=["GET"])
+@app.route("/oqp_joint_states", methods=["GET"])
 def get_dog_joints_state():
     global DOG_JOINTS, DOG_JOINT_NAMES
     return {
@@ -288,6 +288,7 @@ def main():
 
     pub = rospy.Publisher('/gripper_state', Float32, queue_size = 10)
     rospy.Subscriber('/joint_states', JointState, joint_states_callback)
+    rospy.Subscriber('/oqp_joint_states', JointState, dog_joint_states_callback)
 
     #rospy.spin()
     app.run(host="0.0.0.0", port=5001)
