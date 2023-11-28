@@ -242,6 +242,10 @@ def get_program_state():
     global active_block_id
     return {"id": active_block_id}
 
+@app.route('/check_server_status', methods=["GET"])
+def check_server_status():
+    return "true", 200
+
 @app.route("/get_joints_state", methods=["GET"])
 def get_joints_state():
     global JOINTS, JOINT_NAMES
