@@ -9,7 +9,7 @@ def publish_joint_states():
     rospy.init_node('joint_state_publisher', anonymous=True)
 
     # Create a publisher for JointState messages
-    pub = rospy.Publisher('oqp_joint_states', JointState, queue_size=10)
+    pub = rospy.Publisher('get_oqp_joint_states', JointState, queue_size=10)
 
     # Create a new JointState message
     joint_state = JointState()
@@ -25,8 +25,11 @@ def publish_joint_states():
     joint_state.velocity = []
     joint_state.effort = []
 
+    rate = rospy.Rate(10) # 10hz
     # Publish the JointState message
-    pub.publish(joint_state)
+    while not rospy.is_shutdown():
+        pub.publish(joint_state)
+        rate.sleep()
 
 if __name__ == '__main__':
     try:
