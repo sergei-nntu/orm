@@ -38,6 +38,9 @@ should_terminate_flag = False
 JOINT_NAMES = ['joint0', 'joint1', 'joint2', 'joint3', 'joint4', 'joint5']
 JOINTS = {}
 
+OQP_JOINT_NAMES = ['joint0', 'joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6', 'joint7', 'joint8', 'joint9', 'joint10', 'joint11']
+OQP_JOINTS = {}
+
 def detect_tf(data):
     start = time.time()
     for m in data.transforms:
@@ -70,6 +73,12 @@ def joint_states_callback(msg):
         JOINTS[name] = position
         # joint_index = JOINT_NAMES.index(name)
         # print(joint_index, msg.position[i])
+
+def oqp_joint_states_callback(msg):
+    for i in range(0, len(msg.position)):
+        name = msg.name[i]
+        position = msg.position[i]
+        OQP_JOINTS[name] = position
 
 def create_pose_message(x, y, z, pitch, roll, yaw):
     pose_msg = Pose()
@@ -254,6 +263,24 @@ def get_joints_state():
         "endEffectorLink": JOINTS[JOINT_NAMES[5]]
     }
 
+@app.route("/get_oqp_joint_state", methods=["GET"])
+def get_dog_joints_state():
+    global OQP_JOINTS, OQP_JOINT_NAMES
+    return {
+        "shoulder1": OQP_JOINTS[OQP_JOINT_NAMES[0]],
+        "reductor1": OQP_JOINTS[OQP_JOINT_NAMES[1]],
+        "knee1": OQP_JOINTS[OQP_JOINT_NAMES[2]],
+        "shoulder2": OQP_JOINTS[OQP_JOINT_NAMES[3]],
+        "reductor2": OQP_JOINTS[OQP_JOINT_NAMES[4]],
+        "knee2": OQP_JOINTS[OQP_JOINT_NAMES[5]],
+        "shoulder3": OQP_JOINTS[OQP_JOINT_NAMES[6]],
+        "reductor3": OQP_JOINTS[OQP_JOINT_NAMES[7]],
+        "knee3": OQP_JOINTS[OQP_JOINT_NAMES[8]],
+        "shoulder4": OQP_JOINTS[OQP_JOINT_NAMES[9]],
+        "reductor4": OQP_JOINTS[OQP_JOINT_NAMES[10]],
+        "knee4": OQP_JOINTS[OQP_JOINT_NAMES[11]],
+    }
+
 def main():
     rospy.init_node('moveit_controller')
 
@@ -261,6 +288,7 @@ def main():
 
     pub = rospy.Publisher('/gripper_state', Float32, queue_size = 10)
     rospy.Subscriber('/joint_states', JointState, joint_states_callback)
+    rospy.Subscriber('/get_oqp_joint_states', JointState, oqp_joint_states_callback)
 
     #rospy.spin()
     app.run(host="0.0.0.0", port=5001)
