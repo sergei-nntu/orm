@@ -268,49 +268,54 @@ def get_joints_state():
         "endEffectorLink": JOINTS[JOINT_NAMES[5]]
     }
 
-@app.route("/get_oqp_joint_state", methods=["GET", "POST"])
-def get_dog_joints_state():
-    global OQP_JOINTS, OQP_JOINT_NAMES, pub_oqp
+@app.get("/get_oqp_joint_state")
+def get_oqp_joint_state():
+    global OQP_JOINTS, OQP_JOINT_NAMES
+    return {
+        "shoulder1": OQP_JOINTS[OQP_JOINT_NAMES[0]],
+        "reductor1": OQP_JOINTS[OQP_JOINT_NAMES[1]],
+        "knee1": OQP_JOINTS[OQP_JOINT_NAMES[2]],
+        "shoulder2": OQP_JOINTS[OQP_JOINT_NAMES[3]],
+        "reductor2": OQP_JOINTS[OQP_JOINT_NAMES[4]],
+        "knee2": OQP_JOINTS[OQP_JOINT_NAMES[5]],
+        "shoulder3": OQP_JOINTS[OQP_JOINT_NAMES[6]],
+        "reductor3": OQP_JOINTS[OQP_JOINT_NAMES[7]],
+        "knee3": OQP_JOINTS[OQP_JOINT_NAMES[8]],
+        "shoulder4": OQP_JOINTS[OQP_JOINT_NAMES[9]],
+        "reductor4": OQP_JOINTS[OQP_JOINT_NAMES[10]],
+        "knee4": OQP_JOINTS[OQP_JOINT_NAMES[11]],
+    }
 
-    if request.method == "GET":
-        return {
-            "shoulder1": OQP_JOINTS[OQP_JOINT_NAMES[0]],
-            "reductor1": OQP_JOINTS[OQP_JOINT_NAMES[1]],
-            "knee1": OQP_JOINTS[OQP_JOINT_NAMES[2]],
-            "shoulder2": OQP_JOINTS[OQP_JOINT_NAMES[3]],
-            "reductor2": OQP_JOINTS[OQP_JOINT_NAMES[4]],
-            "knee2": OQP_JOINTS[OQP_JOINT_NAMES[5]],
-            "shoulder3": OQP_JOINTS[OQP_JOINT_NAMES[6]],
-            "reductor3": OQP_JOINTS[OQP_JOINT_NAMES[7]],
-            "knee3": OQP_JOINTS[OQP_JOINT_NAMES[8]],
-            "shoulder4": OQP_JOINTS[OQP_JOINT_NAMES[9]],
-            "reductor4": OQP_JOINTS[OQP_JOINT_NAMES[10]],
-            "knee4": OQP_JOINTS[OQP_JOINT_NAMES[11]],
-        }
-    elif request.method == "POST": 
-        data = request.json()
+@app.post("/post_oqp_joint_state")
+def post_dog_joints_state():
+    global OQP_JOINT_NAMES, pub_oqp
+    data = request.json()
+    # FIXME: There is some error that calls 500
+    shoulder1 = data["shoulder1"]
+    reductor1 = data["reductor1"]
+    knee1 = data["knee1"]
+    shoulder2 = data["shoulder2"]
+    reductor2 = data["reductor2"]
+    knee2 = data["knee2"]
+    shoulder3 = data["shoulder3"]
+    reductor3 = data["reductor3"]
+    knee3 = data["knee3"]
+    shoulder4 = data["shoulder4"]
+    reductor4 = data["reductor4"]
+    knee4 = data["knee4"]
 
-        shoulder1 = data["shoulder1"]
-        reductor1 = data["reductor1"]
-        knee1 = data["knee1"]
-        shoulder2 = data["shoulder2"]
-        reductor2 = data["reductor2"]
-        knee2 = data["knee2"]
-        shoulder3 = data["shoulder3"]
-        reductor3 = data["reductor3"]
-        knee3 = data["knee3"]
-        shoulder4 = data["shoulder4"]
-        reductor4 = data["reductor4"]
-        knee4 = data["knee4"]
+    joint_state = JointState()
+    joint_state.header.stamp = rospy.Time.now()
 
-        joint_state = JointState()
-        joint_state.header.stamp = rospy.Time.now()
-        joint_state.name = OQP_JOINT_NAMES
-        joint_state.position = [shoulder1, reductor1, knee1, shoulder2, reductor2, knee2, shoulder3, reductor3, knee3, shoulder4, reductor4, knee4]
-        joint_state.velocity = []
-        joint_state.effort = []
-        
-        pub_oqp.publish(joint_state)
+    joint_state.name = OQP_JOINT_NAMES
+    joint_state.position = [shoulder1, reductor1, knee1, shoulder2, reductor2, knee2, shoulder3, reductor3, knee3, shoulder4, reductor4, knee4]
+    print(joint_state.position)
+    joint_state.velocity = []
+    joint_state.effort = []
+
+    pub_oqp.publish(joint_state)
+    return {"success": "true"}
+
 
 def main():
     rospy.init_node('moveit_controller')
