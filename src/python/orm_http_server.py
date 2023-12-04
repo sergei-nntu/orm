@@ -289,8 +289,8 @@ def get_oqp_joint_state():
 @app.post("/post_oqp_joint_state")
 def post_dog_joints_state():
     global OQP_JOINT_NAMES, pub_oqp
-    data = request.json()
-    # FIXME: There is some error that calls 500
+    data = request.json
+
     shoulder1 = data["shoulder1"]
     reductor1 = data["reductor1"]
     knee1 = data["knee1"]
@@ -309,7 +309,7 @@ def post_dog_joints_state():
 
     joint_state.name = OQP_JOINT_NAMES
     joint_state.position = [shoulder1, reductor1, knee1, shoulder2, reductor2, knee2, shoulder3, reductor3, knee3, shoulder4, reductor4, knee4]
-    print(joint_state.position)
+
     joint_state.velocity = []
     joint_state.effort = []
 
