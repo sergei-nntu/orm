@@ -30,8 +30,10 @@ group.set_max_acceleration_scaling_factor(1)
 
 app = Flask(__name__)
 
-pub = None
+pub_arm = None
 pub_oqp = None
+pub_grip = None
+
 pose_state = None
 active_block_id = None
 should_terminate_flag = False
@@ -81,6 +83,17 @@ def oqp_joint_states_callback(msg):
         position = msg.position[i]
         OQP_JOINTS[name] = position
 
+def create_joint_state(name, position):
+    joint_state = JointState()
+    joint_state.header.stamp = rospy.Time.now()
+
+    joint_state.name = name
+    joint_state.position = position
+
+    joint_state.velocity = []
+    joint_state.effort = []
+    return joint_state
+
 def create_pose_message(x, y, z, pitch, roll, yaw):
     pose_msg = Pose()
 
@@ -125,7 +138,7 @@ def set_gripper_state(data):
     gripper_state_msg.data = data
 
     # Publish Gripper Pose
-    pub.publish(gripper_state_msg)
+    pub_grip.publish(gripper_state_msg)
 
     group.set_planning_time(0.1)
     plan = group.go(wait=True)
@@ -135,7 +148,7 @@ def set_gripper_state(data):
     return {"execute": plan}
 
 def publish_grip_state(state):
-    pub.publish(state)
+    pub_grip.publish(state)
     time.sleep(1)
 
 def set_active_block(id):
@@ -304,27 +317,40 @@ def post_dog_joints_state():
     reductor4 = data["reductor4"]
     knee4 = data["knee4"]
 
-    joint_state = JointState()
-    joint_state.header.stamp = rospy.Time.now()
-
-    joint_state.name = OQP_JOINT_NAMES
-    joint_state.position = [shoulder1, reductor1, knee1, shoulder2, reductor2, knee2, shoulder3, reductor3, knee3, shoulder4, reductor4, knee4]
-
-    joint_state.velocity = []
-    joint_state.effort = []
-
+    position = [shoulder1, reductor1, knee1, shoulder2, reductor2, knee2, shoulder3, reductor3, knee3, shoulder4, reductor4, knee4]
+    joint_state = create_joint_state(OQP_JOINT_NAMES, position)
     pub_oqp.publish(joint_state)
+    
     return {"success": "true"}
 
+@app.post("/post_joints_state")
+def post_joints_state():
+    data = request.json
+
+    joint0 = data["joint0"]
+    joint1 = data["joint1"]
+    joint2 = data["joint2"]
+    joint3 = data["joint3"]
+    joint4 = data["joint4"]
+    joint5 = data["joint5"]
+
+    position = [joint0, joint1, joint2, joint3, joint4, joint5]
+    joint_state = create_joint_state(JOINT_NAMES, position)
+    pub_arm.publish(joint_state)
+
+    return {"success": "true"}
 
 def main():
     rospy.init_node('moveit_controller')
 
-    global pub
+    global pub_arm
     global pub_oqp
+    global pub_grip
 
-    pub = rospy.Publisher('/gripper_state', Float32, queue_size = 10)
-    pub_oqp = rospy.Publisher('get_oqp_joint_states', JointState, queue_size=10)
+    pub_arm = rospy.Publisher('/joint_states', JointState, queue_size=10)
+    pub_oqp = rospy.Publisher('/get_oqp_joint_states', JointState, queue_size=10)
+    pub_grip = rospy.Publisher('/gripper_state', Float32, queue_size = 10)
+
     rospy.Subscriber('/joint_states', JointState, joint_states_callback)
     rospy.Subscriber('/get_oqp_joint_states', JointState, oqp_joint_states_callback)
 
