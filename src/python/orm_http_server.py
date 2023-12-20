@@ -347,12 +347,12 @@ def main():
     global pub_oqp
     global pub_grip
 
-    pub_arm = rospy.Publisher('/joint_states', JointState, queue_size=10)
-    pub_oqp = rospy.Publisher('/get_oqp_joint_states', JointState, queue_size=10)
+    pub_arm = rospy.Publisher('/joint_states_manual', JointState, queue_size=10)
+    pub_oqp = rospy.Publisher('/oqp_joint_states', JointState, queue_size=10)
     pub_grip = rospy.Publisher('/gripper_state', Float32, queue_size = 10)
 
     rospy.Subscriber('/joint_states', JointState, joint_states_callback)
-    rospy.Subscriber('/get_oqp_joint_states', JointState, oqp_joint_states_callback)
+    rospy.Subscriber('/oqp_joint_states', JointState, oqp_joint_states_callback)
 
     #rospy.spin()
     app.run(host="0.0.0.0", port=5001)
