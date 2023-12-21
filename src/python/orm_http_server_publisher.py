@@ -9,7 +9,7 @@ def publish_joint_states():
     rospy.init_node('joint_state_publisher', anonymous=True)
 
     # Create a publisher for JointState messages
-    pub = rospy.Publisher('get_oqp_joint_states', JointState, queue_size=10)
+    pub = rospy.Publisher('/oqp_joint_states', JointState, queue_size=10)
 
     # Create a new JointState message
     joint_state = JointState()
