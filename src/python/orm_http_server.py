@@ -36,7 +36,9 @@ pub_grip = None
 
 pose_state = None
 active_block_id = None
+
 should_terminate_flag = False
+blockly_running = False
 
 JOINT_NAMES = ['joint0', 'joint1', 'joint2', 'joint3', 'joint4', 'joint5']
 JOINTS = {}
@@ -203,8 +205,11 @@ def get_current_ip():
 def start_program():
     global program_thread
     global should_terminate_flag
+    global blockly_running
 
+    blockly_running = True
     should_terminate_flag = False
+
     if program_thread is None or not program_thread.is_alive():
         imp.reload(program)
         program_thread = threading.Thread(target=program.program_main, args=(should_terminate, set_active_block, publish_grip_state))
@@ -215,10 +220,11 @@ def start_program():
 
 @app.route("/stop_program", methods=["GET"])
 def stop_program():
-    global should_terminate_flag
+    global should_terminate_flag, blockly_running
     if should_terminate_flag:
         return {"success": False}
     else:
+        blockly_running = False
         should_terminate_flag = True
         return {"success": True}
 
@@ -268,6 +274,11 @@ def get_program_state():
 @app.route('/check_server_status', methods=["GET"])
 def check_server_status():
     return "true", 200
+
+@app.route('/get_blockly_state', methods=["GET"])
+def get_blockly_state():
+    global blockly_running
+    return {"state": blockly_running}
 
 @app.route("/get_joints_state", methods=["GET"])
 def get_joints_state():
