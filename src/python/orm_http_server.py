@@ -40,6 +40,8 @@ active_block_id = None
 should_terminate_flag = False
 blockly_running = False
 
+joint_trajectory = []
+
 JOINT_NAMES = ['joint0', 'joint1', 'joint2', 'joint3', 'joint4', 'joint5']
 JOINTS = {}
 
@@ -84,6 +86,13 @@ def oqp_joint_states_callback(msg):
         name = msg.name[i]
         position = msg.position[i]
         OQP_JOINTS[name] = position
+
+def joint_trajectory_callback(msg):
+    global joint_trajectory
+    joint_trajectory.clear()
+    points = msg.trajectory[0].joint_trajectory.points
+    for point in points:
+        joint_trajectory.append(point.positions)
 
 def create_joint_state(name, position):
     joint_state = JointState()
@@ -271,6 +280,11 @@ def get_program_state():
     global active_block_id
     return {"id": active_block_id}
 
+@app.route("/get_joint_trajectory", methods=["GET"])
+def get_joint_trajectory():
+    global joint_trajectory
+    return joint_trajectory
+
 @app.route('/check_server_status', methods=["GET"])
 def check_server_status():
     return "true", 200
@@ -364,6 +378,7 @@ def main():
 
     rospy.Subscriber('/joint_states', JointState, joint_states_callback)
     rospy.Subscriber('/oqp_joint_states', JointState, oqp_joint_states_callback)
+    rospy.Subscriber('/move_group/display_planned_path', DisplayTrajectory, joint_trajectory_callback)
 
     #rospy.spin()
     app.run(host="0.0.0.0", port=5001)
