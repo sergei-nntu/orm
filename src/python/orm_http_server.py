@@ -89,6 +89,7 @@ def oqp_joint_states_callback(msg):
 
 def joint_trajectory_callback(msg):
     global joint_trajectory
+    joint_trajectory.clear()
     points = msg.trajectory[0].joint_trajectory.points
     for point in points:
         joint_trajectory.append(point.positions)
