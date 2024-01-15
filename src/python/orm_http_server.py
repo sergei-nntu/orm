@@ -41,6 +41,7 @@ should_terminate_flag = False
 blockly_running = False
 
 joint_trajectory = []
+gripper_state = 0.0
 
 JOINT_NAMES = ['joint0', 'joint1', 'joint2', 'joint3', 'joint4', 'joint5']
 JOINTS = {}
@@ -87,11 +88,16 @@ def oqp_joint_states_callback(msg):
         position = msg.position[i]
         OQP_JOINTS[name] = position
 
+def gripper_state_callback(msg):
+    global gripper_state
+    gripper_state = msg.data
+
 def joint_trajectory_callback(msg):
     global joint_trajectory
     joint_trajectory.clear()
     points = msg.trajectory[0].joint_trajectory.points
     for point in points:
+        point.positions.append(gripper_state)
         joint_trajectory.append(point.positions)
 
 def create_joint_state(name, position):
@@ -377,6 +383,7 @@ def main():
     pub_grip = rospy.Publisher('/gripper_state', Float32, queue_size = 10)
 
     rospy.Subscriber('/joint_states', JointState, joint_states_callback)
+    rospy.Subscriber('/gripper_state', Float32, gripper_state_callback)
     rospy.Subscriber('/oqp_joint_states', JointState, oqp_joint_states_callback)
     rospy.Subscriber('/move_group/display_planned_path', DisplayTrajectory, joint_trajectory_callback)
 
