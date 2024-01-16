@@ -30,6 +30,7 @@ group.set_max_acceleration_scaling_factor(1)
 
 app = Flask(__name__)
 
+# Dynamic constants (global states)
 pub_arm = None
 pub_oqp = None
 pub_grip = None
@@ -42,6 +43,9 @@ blockly_running = False
 
 joint_trajectory = []
 gripper_state = 0.0
+
+# Static constats
+GRIPPER_SCALE_COEFFICIENT = 0.1
 
 JOINT_NAMES = ['joint0', 'joint1', 'joint2', 'joint3', 'joint4', 'joint5']
 JOINTS = {}
@@ -90,15 +94,16 @@ def oqp_joint_states_callback(msg):
 
 def gripper_state_callback(msg):
     global gripper_state
-    gripper_state = msg.data
+    gripper_state = msg.data * GRIPPER_SCALE_COEFFICIENT
 
 def joint_trajectory_callback(msg):
-    global joint_trajectory
+    global joint_trajectory, gripper_state
     joint_trajectory.clear()
     points = msg.trajectory[0].joint_trajectory.points
     for point in points:
-        point.positions.append(gripper_state)
-        joint_trajectory.append(point.positions)
+        joints_state = list(point.positions)
+        joints_state.append(gripper_state)
+        joint_trajectory.append(joints_state)
 
 def create_joint_state(name, position):
     joint_state = JointState()
@@ -150,8 +155,9 @@ def set_pose(x, y, z, pitch, roll, yaw):
 
     return {"execute": success}
 
-def set_gripper_state(data):
+def put_gripper_state(data):
     gripper_state_msg = Float32()
+    # FIXME: add the coefficient to data
     gripper_state_msg.data = data
 
     # Publish Gripper Pose
@@ -204,10 +210,10 @@ def convert_pose():
     return set_pose(x, y, z, pitch, roll, yaw)
 
 @app.route("/set_gripper_state", methods=["POST"])
-def gripper_state():
+def set_gripper_state():
     data = request.json
     gripper_state = data["gripper"]
-    return set_gripper_state(gripper_state)
+    return put_gripper_state(gripper_state)
 
 @app.route("/current_ip", methods=["GET"])
 def get_current_ip():
