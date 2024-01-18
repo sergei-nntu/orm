@@ -30,6 +30,7 @@ group.set_max_acceleration_scaling_factor(1)
 
 app = Flask(__name__)
 
+# Dynamic constants (global states)
 pub_arm = None
 pub_oqp = None
 pub_grip = None
@@ -41,7 +42,9 @@ should_terminate_flag = False
 blockly_running = False
 
 joint_trajectory = []
+gripper_state = 0.0
 
+# Static constants
 JOINT_NAMES = ['joint0', 'joint1', 'joint2', 'joint3', 'joint4', 'joint5']
 JOINTS = {}
 
@@ -87,12 +90,18 @@ def oqp_joint_states_callback(msg):
         position = msg.position[i]
         OQP_JOINTS[name] = position
 
+def gripper_state_callback(msg):
+    global gripper_state
+    gripper_state = msg.data
+
 def joint_trajectory_callback(msg):
-    global joint_trajectory
+    global joint_trajectory, gripper_state
     joint_trajectory.clear()
     points = msg.trajectory[0].joint_trajectory.points
     for point in points:
-        joint_trajectory.append(point.positions)
+        joints_state = list(point.positions)
+        joints_state.append(gripper_state)
+        joint_trajectory.append(joints_state)
 
 def create_joint_state(name, position):
     joint_state = JointState()
@@ -144,7 +153,7 @@ def set_pose(x, y, z, pitch, roll, yaw):
 
     return {"execute": success}
 
-def set_gripper_state(data):
+def put_gripper_state(data):
     gripper_state_msg = Float32()
     gripper_state_msg.data = data
 
@@ -152,11 +161,11 @@ def set_gripper_state(data):
     pub_grip.publish(gripper_state_msg)
 
     group.set_planning_time(0.1)
-    plan = group.go(wait=True)
-    
-    group.execute(plan, wait=True)
-    
-    return {"execute": plan}
+    success = group.go(wait=True)
+
+    # That's no working correct
+    # group.execute(plan, wait=True)
+    return {"execute": success}
 
 def publish_grip_state(state):
     pub_grip.publish(state)
@@ -181,7 +190,6 @@ def should_terminate():
 @app.route("/get_pose_state", methods=["GET"])
 def get_pose_state():
     global pose_state
-    print(pose_state)
     return {"data": pose_state}
 
 @app.route("/convert_pose", methods=["POST"])
@@ -198,10 +206,10 @@ def convert_pose():
     return set_pose(x, y, z, pitch, roll, yaw)
 
 @app.route("/set_gripper_state", methods=["POST"])
-def gripper_state():
+def set_gripper_state():
     data = request.json
     gripper_state = data["gripper"]
-    return set_gripper_state(gripper_state)
+    return put_gripper_state(gripper_state)
 
 @app.route("/current_ip", methods=["GET"])
 def get_current_ip():
@@ -377,6 +385,7 @@ def main():
     pub_grip = rospy.Publisher('/gripper_state', Float32, queue_size = 10)
 
     rospy.Subscriber('/joint_states', JointState, joint_states_callback)
+    rospy.Subscriber('/gripper_state', Float32, gripper_state_callback)
     rospy.Subscriber('/oqp_joint_states', JointState, oqp_joint_states_callback)
     rospy.Subscriber('/move_group/display_planned_path', DisplayTrajectory, joint_trajectory_callback)
 
