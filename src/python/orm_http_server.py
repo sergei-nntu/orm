@@ -44,9 +44,7 @@ blockly_running = False
 joint_trajectory = []
 gripper_state = 0.0
 
-# Static constats
-GRIPPER_SCALE_COEFFICIENT = 0.1
-
+# Static constants
 JOINT_NAMES = ['joint0', 'joint1', 'joint2', 'joint3', 'joint4', 'joint5']
 JOINTS = {}
 
@@ -94,7 +92,7 @@ def oqp_joint_states_callback(msg):
 
 def gripper_state_callback(msg):
     global gripper_state
-    gripper_state = msg.data * GRIPPER_SCALE_COEFFICIENT
+    gripper_state = msg.data
 
 def joint_trajectory_callback(msg):
     global joint_trajectory, gripper_state
@@ -157,18 +155,17 @@ def set_pose(x, y, z, pitch, roll, yaw):
 
 def put_gripper_state(data):
     gripper_state_msg = Float32()
-    # FIXME: add the coefficient to data
     gripper_state_msg.data = data
 
     # Publish Gripper Pose
     pub_grip.publish(gripper_state_msg)
 
     group.set_planning_time(0.1)
-    plan = group.go(wait=True)
-    
-    group.execute(plan, wait=True)
-    
-    return {"execute": plan}
+    success = group.go(wait=True)
+
+    # That's no working correct
+    # group.execute(plan, wait=True)
+    return {"execute": success}
 
 def publish_grip_state(state):
     pub_grip.publish(state)
@@ -193,7 +190,6 @@ def should_terminate():
 @app.route("/get_pose_state", methods=["GET"])
 def get_pose_state():
     global pose_state
-    print(pose_state)
     return {"data": pose_state}
 
 @app.route("/convert_pose", methods=["POST"])
