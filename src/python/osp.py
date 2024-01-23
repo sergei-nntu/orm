@@ -148,7 +148,9 @@ class OSP:
                     
     def osp_info_dev_type(self):
         self.osp_dev_type = self.input_buffer[OSP_BYTE_PARAM_INDEX]
-        #print("Device Type Received:",self.osp_dev_type);
+        # FIXME: there is some valid thing, so we're putting 1 to esp_dev_type so far
+        self.osp_dev_type = 1
+        print("Device Type Received:", self.osp_dev_type);
                 
     def osp_obp_info_soc(self):
         soc_lsb = self.input_buffer[OSP_INT_PARAM_LSB_INDEX]

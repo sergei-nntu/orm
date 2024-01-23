@@ -1,8 +1,50 @@
 import sys
+import time
 import glob
+import threading
 from osp import OSP
+import rospy
+from std_msgs.msg import Bool
 
-def findOutOSAndGetPorts():
+# NOTE connection is boolean variable so far, maybe it will be object in the future
+connection = None
+
+def usb_connection():
+    global connection
+
+    try:
+        ports = get_os_ports()
+
+        devs = list(map(lambda port: OSP(port), ports))
+        
+        time.sleep(2) # Timeout to receive the first messages from the devices
+
+        print('----------------------------')
+        print('devs:', devs)
+        print('ports:', ports)
+        print('----------------------------')
+
+        for dev in devs:
+            dev.osp_info_dev_type()
+            time.sleep(1)
+
+        osp_dev_type = 1
+        devs_of_type = list(filter(lambda d: d.get_dev_type() == osp_dev_type, devs))
+        devs_of_wrong_type = filter(lambda d: d.get_dev_type() != osp_dev_type, devs)
+
+        connection = True if bool(devs_of_type) else False
+
+        for dev in devs_of_wrong_type:
+            dev.stop()
+
+        for dev in devs_of_type:
+            dev.stop()
+
+        print('Active threads:', threading.active_count())
+    except Exception as err:
+        connection = False
+
+def get_os_ports():
     ports = None
     if sys.platform.startswith('win'):
         ports = ['COM%s' % (i + 1) for i in range(256)]
@@ -18,10 +60,14 @@ def findOutOSAndGetPorts():
 
 if __name__ == '__main__':
     try:
-        ports = findOutOSAndGetPorts()
-        for port in ports:
-            orm = OSP(port)
-            print(orm.joint_angle)
+        rospy.init_node('usb_controller')
+        usb_publisher = rospy.Publisher('/usb_connection', Bool, queue_size=10)
+        
+        rate = rospy.Rate(10) # 10hz
+        while not rospy.is_shutdown():
+            usb_connection()
+            usb_publisher.publish(connection)
+            rate.sleep()
+
     except Exception as err:
         print(f"Unexpected {err=}, {type(err)=}")
-        print("Connection lost...")

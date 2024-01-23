@@ -7,7 +7,7 @@ import moveit_commander
 from moveit_msgs.msg import DisplayTrajectory, PlanningScene
 import geometry_msgs.msg
 from geometry_msgs.msg import Pose
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, Bool
 #from fiducial_msgs.msg import FiducialTransformArray
 from moveit_commander import MoveGroupCommander
 from tf.transformations import quaternion_from_euler
@@ -40,6 +40,7 @@ active_block_id = None
 
 should_terminate_flag = False
 blockly_running = False
+connection = False
 
 joint_trajectory = []
 gripper_state = 0.0
@@ -83,6 +84,10 @@ def joint_states_callback(msg):
         JOINTS[name] = position
         # joint_index = JOINT_NAMES.index(name)
         # print(joint_index, msg.position[i])
+
+def usb_connection_callback(msg):
+    global connection
+    connection = msg.data
 
 def oqp_joint_states_callback(msg):
     for i in range(0, len(msg.position)):
@@ -297,6 +302,11 @@ def get_joint_trajectory():
 def check_server_status():
     return "true", 200
 
+@app.route('/get_usb_connection_status', methods=["GET"])
+def get_usb_connection_status():
+    global connection
+    return {"connection": connection}
+
 @app.route('/get_blockly_state', methods=["GET"])
 def get_blockly_state():
     global blockly_running
@@ -388,8 +398,8 @@ def main():
     rospy.Subscriber('/gripper_state', Float32, gripper_state_callback)
     rospy.Subscriber('/oqp_joint_states', JointState, oqp_joint_states_callback)
     rospy.Subscriber('/move_group/display_planned_path', DisplayTrajectory, joint_trajectory_callback)
+    rospy.Subscriber('/usb_connection', Bool, usb_connection_callback)
 
-    #rospy.spin()
     app.run(host="0.0.0.0", port=5001)
 
 if __name__ == '__main__':
