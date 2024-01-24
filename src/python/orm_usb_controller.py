@@ -8,13 +8,13 @@ from std_msgs.msg import Bool
 
 # NOTE connection is boolean variable so far, maybe it will be object in the future
 connection = None
+PORTS = []
+DEVICES = []
 
-def usb_connection():
-    global connection
+def usb_connection(ports):
+    global connection, DEVICES
 
     try:
-        ports = get_os_ports()
-
         devs = list(map(lambda port: OSP(port), ports))
         
         time.sleep(2) # Timeout to receive the first messages from the devices
@@ -29,15 +29,12 @@ def usb_connection():
             time.sleep(1)
 
         osp_dev_type = 1
-        devs_of_type = list(filter(lambda d: d.get_dev_type() == osp_dev_type, devs))
+        DEVICES = list(filter(lambda d: d.get_dev_type() == osp_dev_type, devs))
         devs_of_wrong_type = filter(lambda d: d.get_dev_type() != osp_dev_type, devs)
 
-        connection = True if bool(devs_of_type) else False
+        connection = True if bool(DEVICES) else False
 
         for dev in devs_of_wrong_type:
-            dev.stop()
-
-        for dev in devs_of_type:
             dev.stop()
 
         print('Active threads:', threading.active_count())
@@ -45,6 +42,7 @@ def usb_connection():
         connection = False
 
 def get_os_ports():
+    global PORTS
     ports = None
     if sys.platform.startswith('win'):
         ports = ['COM%s' % (i + 1) for i in range(256)]
@@ -55,7 +53,16 @@ def get_os_ports():
         ports = glob.glob('/dev/ttyUSB*')
     else:
         raise EnvironmentError('Unsupported platform')
-    return ports
+
+    if PORTS != ports:
+        stop_devices()
+        usb_connection(ports)
+        PORTS = ports
+
+def stop_devices():
+    global DEVICES
+    for dev in DEVICES:
+        dev.stop()
 
 
 if __name__ == '__main__':
@@ -65,7 +72,7 @@ if __name__ == '__main__':
         
         rate = rospy.Rate(10) # 10hz
         while not rospy.is_shutdown():
-            usb_connection()
+            get_os_ports()
             usb_publisher.publish(connection)
             rate.sleep()
 
