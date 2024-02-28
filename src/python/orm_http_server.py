@@ -229,7 +229,7 @@ def start_program():
 
     if program_thread is None or not program_thread.is_alive():
         imp.reload(program)
-        program_thread = threading.Thread(target=program.program_main, args=(should_terminate, set_active_block, publish_grip_state))
+        program_thread = threading.Thread(target=program.program_main, args=(should_terminate, set_active_block, publish_grip_state, orm_blockly_delay, orm_blockly_set_position, orm_blockly_set_gripper_state))
         program_thread.start()
         return {"success": True}
     else:
@@ -254,7 +254,7 @@ def get_active_program():
 def insert_code(file_path, dynamic_code):
     try:
         code_with_indent = textwrap.indent(dynamic_code, '  ')
-        code = f"from orm_http_server import *\ndef program_main(should_terminate_function, set_active_block_id, publish_grip_state):\n{code_with_indent}"
+        code = f"def program_main(should_terminate_function, set_active_block_id, publish_grip_state, orm_blockly_delay, orm_blockly_set_position, orm_blockly_set_gripper_state):\n{code_with_indent}"
         
         with open(file_path, 'w') as file:
             file.write(code)
