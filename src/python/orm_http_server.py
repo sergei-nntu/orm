@@ -161,7 +161,7 @@ def set_pose(x, y, z, pitch, roll, yaw):
             "yaw": yaw
         }
 
-    return {"execute": success}
+    return {"execute": success, "data": current_pose_state}
 
 
 def put_gripper_state(data):
