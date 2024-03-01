@@ -35,7 +35,6 @@ pub_arm = None
 pub_oqp = None
 pub_grip = None
 
-pose_state = None
 active_block_id = None
 
 should_terminate_flag = False
@@ -49,8 +48,12 @@ gripper_state = 0.0
 JOINT_NAMES = ['joint0', 'joint1', 'joint2', 'joint3', 'joint4', 'joint5']
 JOINTS = {}
 
-OQP_JOINT_NAMES = ['joint0', 'joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6', 'joint7', 'joint8', 'joint9', 'joint10', 'joint11']
+OQP_JOINT_NAMES = ['joint0', 'joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6', 'joint7', 'joint8', 'joint9',
+                   'joint10', 'joint11']
 OQP_JOINTS = {}
+
+current_pose_state = dict(x=0, y=0.1, z=0.4, pitch=0, roll=0, yaw=0)
+
 
 def detect_tf(data):
     start = time.time()
@@ -77,17 +80,20 @@ def detect_tf(data):
         end = time.time()
         print("Time:", end - start)
 
+
 def joint_states_callback(msg):
-    for i in range(0,len(msg.position)):
+    for i in range(0, len(msg.position)):
         name = msg.name[i]
         position = msg.position[i]
         JOINTS[name] = position
         # joint_index = JOINT_NAMES.index(name)
         # print(joint_index, msg.position[i])
 
+
 def usb_connection_callback(msg):
     global connection
     connection = msg.data
+
 
 def oqp_joint_states_callback(msg):
     for i in range(0, len(msg.position)):
@@ -95,9 +101,11 @@ def oqp_joint_states_callback(msg):
         position = msg.position[i]
         OQP_JOINTS[name] = position
 
+
 def gripper_state_callback(msg):
     global gripper_state
     gripper_state = msg.data
+
 
 def joint_trajectory_callback(msg):
     global joint_trajectory, gripper_state
@@ -107,6 +115,7 @@ def joint_trajectory_callback(msg):
         joints_state = list(point.positions)
         joints_state.append(gripper_state)
         joint_trajectory.append(joints_state)
+
 
 def create_joint_state(name, position):
     joint_state = JointState()
@@ -118,6 +127,7 @@ def create_joint_state(name, position):
     joint_state.velocity = []
     joint_state.effort = []
     return joint_state
+
 
 def create_pose_message(x, y, z, pitch, roll, yaw):
     pose_msg = Pose()
@@ -138,6 +148,7 @@ def create_pose_message(x, y, z, pitch, roll, yaw):
 
     return pose_msg
 
+
 def set_pose(x, y, z, pitch, roll, yaw):
     pose_msg = create_pose_message(x, y, z, pitch, roll, yaw)
     group.set_pose_target(pose_msg)
@@ -145,9 +156,9 @@ def set_pose(x, y, z, pitch, roll, yaw):
 
     success = group.go(wait=True)
 
-    global pose_state
+    global current_pose_state
     if success:
-        pose_state = {
+        current_pose_state = {
             "x": x,
             "y": y,
             "z": z,
@@ -156,7 +167,8 @@ def set_pose(x, y, z, pitch, roll, yaw):
             "yaw": yaw
         }
 
-    return {"execute": success}
+    return {"execute": success, "data": current_pose_state}
+
 
 def put_gripper_state(data):
     gripper_state_msg = Float32()
@@ -172,30 +184,38 @@ def put_gripper_state(data):
     # group.execute(plan, wait=True)
     return {"execute": success}
 
+
 def publish_grip_state(state):
     pub_grip.publish(state)
     time.sleep(1)
+
 
 def set_active_block(id):
     global active_block_id
     active_block_id = id
 
+
 def orm_blockly_set_gripper_state(gripper_state):
     return round(gripper_state * math.pi / 180, 2)
+
 
 def orm_blockly_set_position(x, y, z, pitch, roll, yaw):
     return set_pose(x, y, z, pitch, roll, yaw)
 
+
 def orm_blockly_delay(ms):
     time.sleep(ms / 1000)
+
 
 def should_terminate():
     return should_terminate_flag
 
+
 @app.route("/get_pose_state", methods=["GET"])
 def get_pose_state():
-    global pose_state
-    return {"data": pose_state}
+    global current_pose_state
+    return {"data": current_pose_state}
+
 
 @app.route("/convert_pose", methods=["POST"])
 def convert_pose():
@@ -210,11 +230,13 @@ def convert_pose():
 
     return set_pose(x, y, z, pitch, roll, yaw)
 
+
 @app.route("/set_gripper_state", methods=["POST"])
 def set_gripper_state():
     data = request.json
     gripper_state = data["gripper"]
     return put_gripper_state(gripper_state)
+
 
 @app.route("/current_ip", methods=["GET"])
 def get_current_ip():
@@ -222,6 +244,7 @@ def get_current_ip():
     s.connect(("8.8.8.8", 80))
 
     return {"ip": s.getsockname()[0]}
+
 
 @app.route("/start_program", methods=["GET"])
 def start_program():
@@ -234,11 +257,12 @@ def start_program():
 
     if program_thread is None or not program_thread.is_alive():
         imp.reload(program)
-        program_thread = threading.Thread(target=program.program_main, args=(should_terminate, set_active_block, publish_grip_state))
+        program_thread = threading.Thread(target=program.program_main, args=(should_terminate, set_active_block, publish_grip_state, orm_blockly_delay, orm_blockly_set_position, orm_blockly_set_gripper_state))
         program_thread.start()
         return {"success": True}
     else:
         return {"success": False}
+
 
 @app.route("/stop_program", methods=["GET"])
 def stop_program():
@@ -256,10 +280,11 @@ def get_active_program():
     structure = get_structure('structure.json')
     return {"structure": structure}
 
+
 def insert_code(file_path, dynamic_code):
     try:
         code_with_indent = textwrap.indent(dynamic_code, '  ')
-        code = f"from orm_http_server import *\ndef program_main(should_terminate_function, set_active_block_id, publish_grip_state):\n{code_with_indent}"
+        code = f"def program_main(should_terminate_function, set_active_block_id, publish_grip_state, orm_blockly_delay, orm_blockly_set_position, orm_blockly_set_gripper_state):\n{code_with_indent}"
         
         with open(file_path, 'w') as file:
             file.write(code)
@@ -267,9 +292,11 @@ def insert_code(file_path, dynamic_code):
     except Exception as e:
         print(f"Error: {e}")
 
+
 def save_structure(file_path, structure):
     with open(file_path, 'w') as file:
         file.write(structure)
+
 
 def get_structure(file_path):
     structure = None
@@ -278,39 +305,46 @@ def get_structure(file_path):
 
     return structure
 
+
 @app.route("/set_active_program", methods=["POST"])
 def set_active_program():
     data = request.json
     source = data["source"]
     structure = data["structure"]
-    
+
     insert_code('program.py', source)
     save_structure('structure.json', structure)
     return {"success": True}
+
 
 @app.route("/get_program_state", methods=["GET"])
 def get_program_state():
     global active_block_id
     return {"id": active_block_id}
 
+
 @app.route("/get_joint_trajectory", methods=["GET"])
 def get_joint_trajectory():
     global joint_trajectory
     return joint_trajectory
 
+
 @app.route('/check_server_status', methods=["GET"])
 def check_server_status():
     return "true", 200
+
 
 @app.route('/get_usb_connection_status', methods=["GET"])
 def get_usb_connection_status():
     global connection
     return {"connection": connection}
 
+
 @app.route('/get_blockly_state', methods=["GET"])
 def get_blockly_state():
     global blockly_running
     return {"state": blockly_running}
+
 
 @app.route("/get_joints_state", methods=["GET"])
 def get_joints_state():
@@ -323,6 +357,7 @@ def get_joints_state():
         "wrist2": JOINTS[JOINT_NAMES[4]],
         "endEffectorLink": JOINTS[JOINT_NAMES[5]]
     }
+
 
 @app.get("/get_oqp_joint_state")
 def get_oqp_joint_state():
@@ -342,6 +377,7 @@ def get_oqp_joint_state():
         "knee4": OQP_JOINTS[OQP_JOINT_NAMES[11]],
     }
 
+
 @app.post("/post_oqp_joint_state")
 def post_dog_joints_state():
     global OQP_JOINT_NAMES, pub_oqp
@@ -360,11 +396,13 @@ def post_dog_joints_state():
     reductor4 = data["reductor4"]
     knee4 = data["knee4"]
 
-    position = [shoulder1, reductor1, knee1, shoulder2, reductor2, knee2, shoulder3, reductor3, knee3, shoulder4, reductor4, knee4]
+    position = [shoulder1, reductor1, knee1, shoulder2, reductor2, knee2, shoulder3, reductor3, knee3, shoulder4,
+                reductor4, knee4]
     joint_state = create_joint_state(OQP_JOINT_NAMES, position)
     pub_oqp.publish(joint_state)
-    
+
     return {"success": "true"}
+
 
 @app.post("/post_joints_state")
 def post_joints_state():
@@ -383,6 +421,7 @@ def post_joints_state():
 
     return {"success": "true"}
 
+
 def main():
     rospy.init_node('moveit_controller')
 
@@ -392,7 +431,7 @@ def main():
 
     pub_arm = rospy.Publisher('/joint_states_manual', JointState, queue_size=10)
     pub_oqp = rospy.Publisher('/oqp_joint_states', JointState, queue_size=10)
-    pub_grip = rospy.Publisher('/gripper_state', Float32, queue_size = 10)
+    pub_grip = rospy.Publisher('/gripper_state', Float32, queue_size=10)
 
     rospy.Subscriber('/joint_states', JointState, joint_states_callback)
     rospy.Subscriber('/gripper_state', Float32, gripper_state_callback)
@@ -400,7 +439,9 @@ def main():
     rospy.Subscriber('/move_group/display_planned_path', DisplayTrajectory, joint_trajectory_callback)
     rospy.Subscriber('/usb_connection', Bool, usb_connection_callback)
 
+    # rospy.spin()
     app.run(host="0.0.0.0", port=5001)
+
 
 if __name__ == '__main__':
     try:
