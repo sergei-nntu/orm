@@ -1,9 +1,7 @@
 #!/usr/bin/env python
-import base64
 import sys
 import socket
 import cv2
-import message_filters
 import rospy
 import time
 import moveit_commander
@@ -12,17 +10,14 @@ from moveit_msgs.msg import DisplayTrajectory, PlanningScene
 import geometry_msgs.msg
 from geometry_msgs.msg import Pose
 from std_msgs.msg import Float32, Bool
-# from fiducial_msgs.msg import FiducialTransformArray
 from moveit_commander import MoveGroupCommander
 from tf.transformations import quaternion_from_euler
 from flask import Flask, request, Response
-from flask_socketio import SocketIO
 from sensor_msgs.msg import JointState, Image
 import threading
 import imp
 import program
 import textwrap
-import re
 import math
 
 program_thread = None
@@ -264,8 +259,8 @@ def start_program():
     if program_thread is None or not program_thread.is_alive():
         imp.reload(program)
         program_thread = threading.Thread(target=program.program_main, args=(
-        should_terminate, set_active_block, publish_grip_state, orm_blockly_delay, orm_blockly_set_position,
-        orm_blockly_set_gripper_state))
+            should_terminate, set_active_block, publish_grip_state, orm_blockly_delay, orm_blockly_set_position,
+            orm_blockly_set_gripper_state))
         program_thread.start()
         return {"success": True}
     else:
@@ -312,6 +307,19 @@ def get_structure(file_path):
         structure = file.read(structure)
 
     return structure
+
+
+def manipulator_image_callback(msg):
+    global frame
+    cv_image = bridge.imgmsg_to_cv2(msg, "bgr8")
+    _, frame = cv2.imencode('.jpg', cv_image)
+
+
+def generate_image():
+    while True:
+        if frame is not None:
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame.tobytes() + b'\r\n')
 
 
 @app.route("/set_active_program", methods=["POST"])
@@ -430,62 +438,39 @@ def post_joints_state():
     return {"success": "true"}
 
 
-def manipulator_image_callback(msg):
-    global frame
-    cv_image = bridge.imgmsg_to_cv2(msg, "bgr8")
-    _, frame = cv2.imencode('.jpg', cv_image)
-
-
-def generate_image():
-    while True:
-        if frame is not None:
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame.tobytes() + b'\r\n')
-
-
 @app.route("/manipulator_video_feed")
 def manipulator_video_feed():
     return Response(generate_image(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
-# def main():
-#     # rospy.init_node('moveit_controller')
-#     rospy.init_node('image_listener')
-#
-#     global pub_arm
-#     global pub_oqp
-#     global pub_grip
-#
-#     manipulator_camera_topic = '/camera/color/image_raw'
-#     rospy.Subscriber(manipulator_camera_topic, Image, manipulator_image_callback)
-#
-#
-#     pub_arm = rospy.Publisher('/joint_states_manual', JointState, queue_size=10)
-#     pub_oqp = rospy.Publisher('/oqp_joint_states', JointState, queue_size=10)
-#     pub_grip = rospy.Publisher('/gripper_state', Float32, queue_size=10)
-#
-#     rospy.Subscriber('/joint_states', JointState, joint_states_callback)
-#     rospy.Subscriber('/gripper_state', Float32, gripper_state_callback)
-#     rospy.Subscriber('/oqp_joint_states', JointState, oqp_joint_states_callback)
-#     rospy.Subscriber('/move_group/display_planned_path', DisplayTrajectory, joint_trajectory_callback)
-#     rospy.Subscriber('/usb_connection', Bool, usb_connection_callback)
-#
-#     # rospy.spin()
-#     app.run(host="0.0.0.0", port=5001, debug=True, threaded=True)
+def main():
+    rospy.init_node('moveit_controller')
 
+    global pub_arm
+    global pub_oqp
+    global pub_grip
 
-if __name__ == '__main__':
-    rospy.init_node('image_listener')
+    pub_arm = rospy.Publisher('/joint_states_manual', JointState, queue_size=10)
+    pub_oqp = rospy.Publisher('/oqp_joint_states', JointState, queue_size=10)
+    pub_grip = rospy.Publisher('/gripper_state', Float32, queue_size=10)
 
-    manipulator_camera_topic = '/camera/color/image_raw'
-    rospy.Subscriber(manipulator_camera_topic, Image, manipulator_image_callback)
+    rospy.Subscriber('/joint_states', JointState, joint_states_callback)
+    rospy.Subscriber('/gripper_state', Float32, gripper_state_callback)
+    rospy.Subscriber('/oqp_joint_states', JointState, oqp_joint_states_callback)
+    rospy.Subscriber('/move_group/display_planned_path', DisplayTrajectory, joint_trajectory_callback)
+    rospy.Subscriber('/usb_connection', Bool, usb_connection_callback)
 
+    # manipulator camera image
+    rospy.Subscriber('/camera/color/image_raw', Image, manipulator_image_callback)
+
+    # rospy.spin()
     app.run(host="0.0.0.0", port=5001, debug=True, threaded=True)
 
 
-    # try:
-    #     main()
-    #     moveit_commander.roscpp_shutdown()
-    # except rospy.ROSInterruptException:
-    #     print("Something went wrong!")
+if __name__ == '__main__':
+    try:
+        main()
+        moveit_commander.roscpp_shutdown()
+    except rospy.ROSInterruptException:
+        print("Something went wrong!")
