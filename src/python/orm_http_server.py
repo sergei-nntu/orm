@@ -1,23 +1,23 @@
 #!/usr/bin/env python
 import sys
 import socket
+import cv2
 import rospy
 import time
 import moveit_commander
+from cv_bridge import CvBridge
 from moveit_msgs.msg import DisplayTrajectory, PlanningScene
 import geometry_msgs.msg
 from geometry_msgs.msg import Pose
 from std_msgs.msg import Float32, Bool
-#from fiducial_msgs.msg import FiducialTransformArray
 from moveit_commander import MoveGroupCommander
 from tf.transformations import quaternion_from_euler
-from flask import Flask, request, jsonify
-from sensor_msgs.msg import JointState
+from flask import Flask, request, Response
+from sensor_msgs.msg import JointState, Image
 import threading
 import imp
 import program
 import textwrap
-import re
 import math
 
 program_thread = None
@@ -29,6 +29,7 @@ group.set_max_velocity_scaling_factor(1)
 group.set_max_acceleration_scaling_factor(1)
 
 app = Flask(__name__)
+bridge = CvBridge()
 
 # Dynamic constants (global states)
 pub_arm = None
@@ -257,7 +258,9 @@ def start_program():
 
     if program_thread is None or not program_thread.is_alive():
         imp.reload(program)
-        program_thread = threading.Thread(target=program.program_main, args=(should_terminate, set_active_block, publish_grip_state, orm_blockly_delay, orm_blockly_set_position, orm_blockly_set_gripper_state))
+        program_thread = threading.Thread(target=program.program_main, args=(
+            should_terminate, set_active_block, publish_grip_state, orm_blockly_delay, orm_blockly_set_position,
+            orm_blockly_set_gripper_state))
         program_thread.start()
         return {"success": True}
     else:
@@ -285,7 +288,7 @@ def insert_code(file_path, dynamic_code):
     try:
         code_with_indent = textwrap.indent(dynamic_code, '  ')
         code = f"def program_main(should_terminate_function, set_active_block_id, publish_grip_state, orm_blockly_delay, orm_blockly_set_position, orm_blockly_set_gripper_state):\n{code_with_indent}"
-        
+
         with open(file_path, 'w') as file:
             file.write(code)
 
@@ -304,6 +307,19 @@ def get_structure(file_path):
         structure = file.read(structure)
 
     return structure
+
+
+def manipulator_image_callback(msg):
+    global frame
+    cv_image = bridge.imgmsg_to_cv2(msg, "bgr8")
+    _, frame = cv2.imencode('.jpg', cv_image)
+
+
+def generate_image():
+    while True:
+        if frame is not None:
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame.tobytes() + b'\r\n')
 
 
 @app.route("/set_active_program", methods=["POST"])
@@ -422,6 +438,12 @@ def post_joints_state():
     return {"success": "true"}
 
 
+@app.route("/manipulator_video_feed")
+def manipulator_video_feed():
+    return Response(generate_image(),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
 def main():
     rospy.init_node('moveit_controller')
 
@@ -439,8 +461,11 @@ def main():
     rospy.Subscriber('/move_group/display_planned_path', DisplayTrajectory, joint_trajectory_callback)
     rospy.Subscriber('/usb_connection', Bool, usb_connection_callback)
 
+    # manipulator camera image
+    rospy.Subscriber('/camera/color/image_raw', Image, manipulator_image_callback)
+
     # rospy.spin()
-    app.run(host="0.0.0.0", port=5001)
+    app.run(host="0.0.0.0", port=5001, debug=True, threaded=True)
 
 
 if __name__ == '__main__':
