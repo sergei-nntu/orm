@@ -465,7 +465,7 @@ def main():
     rospy.Subscriber('/camera/color/image_raw', Image, manipulator_image_callback)
 
     # rospy.spin()
-    app.run(host="0.0.0.0", port=5001, debug=True, threaded=True)
+    app.run(host="0.0.0.0", port=5001)
 
 
 if __name__ == '__main__':
