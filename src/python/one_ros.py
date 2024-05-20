@@ -42,7 +42,7 @@ class OneROS:
     def trajectory_applying_thread(self):
         while True:
             if self.scheduled_trajectory is not None:
-                self.apply_trajectory(self.scheduled_trajectory.joint_names)
+                self.apply_trajectory(self.scheduled_trajectory.joi)
             time.sleep(0.1)
 
     def joint_trajectory_callback(self, msg):
