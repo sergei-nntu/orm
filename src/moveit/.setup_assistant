@@ -1,0 +1,11 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: ""
+    relative_path: /home/sw1pr0g/Downloads/we_r2_arm.urdf.xacro
+    xacro_args: ""
+  SRDF:
+    relative_path: config/we_r2_arm.srdf
+  CONFIG:
+    author_name: Alex Poryadin
+    author_email: poryadin_alex@mail.ru
+    generated_timestamp: 1716274620
