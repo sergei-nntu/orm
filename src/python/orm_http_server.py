@@ -10,15 +10,20 @@ from moveit_msgs.msg import DisplayTrajectory, PlanningScene
 import geometry_msgs.msg
 from geometry_msgs.msg import Pose
 from std_msgs.msg import Float32, Bool
+from moveit_commander import RobotCommander, PlanningSceneInterface
 from moveit_commander import MoveGroupCommander
+from moveit_commander import roscpp_initialize, roscpp_shutdown
 from tf.transformations import quaternion_from_euler
 from flask import Flask, request, Response
 from sensor_msgs.msg import JointState, Image
 import threading
-import imp
+import importlib
 import program
 import textwrap
 import math
+
+# from moveit_task_constructor import core
+# from moveit_task_constructor import stages
 
 program_thread = None
 
@@ -444,6 +449,33 @@ def manipulator_video_feed():
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
+def create_pick_and_place_task():
+    task = core.Task()
+    task.stages.append(stages.CurrentState("current_state"))
+
+    move_to_pregrasp = stages.MoveTo("move_to_pregrasp")
+    move_to_pregrasp.group = "arm"
+    move_to_pregrasp.set_goal("pregrasp_pose")
+    task.stages.append(move_to_pregrasp)
+
+    grasp = stages.Grasp("grasp")
+    grasp.group = "gripper"
+    grasp.set_goal("grasp_pose")
+    task.stages.append(grasp)
+
+    move_to_place = stages.MoveTo("move_to_place")
+    move_to_place.group = "arm"
+    move_to_place.set_goal("place_pose")
+    task.stages.append(move_to_place)
+
+    place = stages.Place("place")
+    place.group = "gripper"
+    place.set_goal("place_pose")
+    task.stages.append(place)
+
+    return task
+
+
 def main():
     rospy.init_node('moveit_controller')
 
@@ -466,6 +498,17 @@ def main():
 
     # rospy.spin()
     app.run(host="0.0.0.0", port=5001)
+
+    # EXAMPLE OF USING MOVEIT CONSTRUCTOR
+    #
+    # robot = RobotCommander()
+    # scene = PlanningSceneInterface()
+    # group = MoveGroupCommander("arm")
+    #
+    # task = create_pick_and_place_task()
+    #
+    # if task.plan():
+    #     task.execute()
 
 
 if __name__ == '__main__':
