@@ -22,8 +22,8 @@ import program
 import textwrap
 import math
 
-# from moveit_task_constructor import core
-# from moveit_task_constructor import stages
+import moveit.task_constructor.core as core
+import moveit.task_constructor.stages as stages
 
 program_thread = None
 
@@ -451,27 +451,25 @@ def manipulator_video_feed():
 
 def create_pick_and_place_task():
     task = core.Task()
-    task.stages.append(stages.CurrentState("current_state"))
 
-    move_to_pregrasp = stages.MoveTo("move_to_pregrasp")
-    move_to_pregrasp.group = "arm"
+    current_state = stages.CurrentState("current_state")
+    task.add(current_state)
+
+    move_to_pregrasp = stages.MoveTo("move_to_pregrasp", group="arm")
     move_to_pregrasp.set_goal("pregrasp_pose")
-    task.stages.append(move_to_pregrasp)
+    task.add(move_to_pregrasp)
 
-    grasp = stages.Grasp("grasp")
-    grasp.group = "gripper"
+    grasp = stages.Grasp("grasp", group="gripper")
     grasp.set_goal("grasp_pose")
-    task.stages.append(grasp)
+    task.add(grasp)
 
-    move_to_place = stages.MoveTo("move_to_place")
-    move_to_place.group = "arm"
+    move_to_place = stages.MoveTo("move_to_place", group="arm")
     move_to_place.set_goal("place_pose")
-    task.stages.append(move_to_place)
+    task.add(move_to_place)
 
-    place = stages.Place("place")
-    place.group = "gripper"
+    place = stages.Place("place", group="gripper")
     place.set_goal("place_pose")
-    task.stages.append(place)
+    task.add(place)
 
     return task
 
@@ -501,14 +499,9 @@ def main():
 
     # EXAMPLE OF USING MOVEIT CONSTRUCTOR
     #
-    # robot = RobotCommander()
-    # scene = PlanningSceneInterface()
-    # group = MoveGroupCommander("arm")
-    #
+    # moveit_commander.roscpp_initialize(sys.argv)
+    # rospy.init_node('pick and place task')
     # task = create_pick_and_place_task()
-    #
-    # if task.plan():
-    #     task.execute()
 
 
 if __name__ == '__main__':
