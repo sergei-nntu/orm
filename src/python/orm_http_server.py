@@ -10,20 +10,14 @@ from moveit_msgs.msg import DisplayTrajectory, PlanningScene
 import geometry_msgs.msg
 from geometry_msgs.msg import Pose
 from std_msgs.msg import Float32, Bool
-from moveit_commander import RobotCommander, PlanningSceneInterface
 from moveit_commander import MoveGroupCommander
-from moveit_commander import roscpp_initialize, roscpp_shutdown
 from tf.transformations import quaternion_from_euler
 from flask import Flask, request, Response
 from sensor_msgs.msg import JointState, Image
 import threading
-import importlib
 import program
 import textwrap
 import math
-
-import moveit.task_constructor.core as core
-import moveit.task_constructor.stages as stages
 
 program_thread = None
 
@@ -449,31 +443,6 @@ def manipulator_video_feed():
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
-def create_pick_and_place_task():
-    task = core.Task()
-
-    current_state = stages.CurrentState("current_state")
-    task.add(current_state)
-
-    move_to_pregrasp = stages.MoveTo("move_to_pregrasp", group="arm")
-    move_to_pregrasp.set_goal("pregrasp_pose")
-    task.add(move_to_pregrasp)
-
-    grasp = stages.Grasp("grasp", group="gripper")
-    grasp.set_goal("grasp_pose")
-    task.add(grasp)
-
-    move_to_place = stages.MoveTo("move_to_place", group="arm")
-    move_to_place.set_goal("place_pose")
-    task.add(move_to_place)
-
-    place = stages.Place("place", group="gripper")
-    place.set_goal("place_pose")
-    task.add(place)
-
-    return task
-
-
 def main():
     rospy.init_node('moveit_controller')
 
@@ -496,12 +465,6 @@ def main():
 
     # rospy.spin()
     app.run(host="0.0.0.0", port=5001)
-
-    # EXAMPLE OF USING MOVEIT CONSTRUCTOR
-    #
-    # moveit_commander.roscpp_initialize(sys.argv)
-    # rospy.init_node('pick and place task')
-    # task = create_pick_and_place_task()
 
 
 if __name__ == '__main__':
