@@ -21,30 +21,30 @@ def create_pick_and_place_task(start_pose, end_pose):
     move_to_pregrasp.setGoal(start_pose)
     task.add(move_to_pregrasp)
 
-    open_gripper = stages.MoveTo("open_gripper", planner)
-    open_gripper.group = "gripper"
-    open_gripper.setGoal("open")
-    task.add(open_gripper)
+    open_hand = stages.MoveTo("open_hand", planner)
+    open_hand.group = "hand"
+    open_hand.setGoal("open")
+    task.add(open_hand)
 
     move_to_grasp = stages.MoveTo("move_to_grasp", planner)
     move_to_grasp.group = "arm"
     move_to_grasp.setGoal(start_pose)
     task.add(move_to_grasp)
 
-    close_gripper = stages.MoveTo("close_gripper", planner)
-    close_gripper.group = "gripper"
-    close_gripper.setGoal("closed")
-    task.add(close_gripper)
+    close_hand = stages.MoveTo("close_hand", planner)
+    close_hand.group = "hand"
+    close_hand.setGoal("closed")
+    task.add(close_hand)
 
     move_to_place = stages.MoveTo("move_to_place", planner)
     move_to_place.group = "arm"
     move_to_place.setGoal(end_pose)
     task.add(move_to_place)
 
-    open_gripper_place = stages.MoveTo("open_gripper_place", planner)
-    open_gripper_place.group = "gripper"
-    open_gripper_place.setGoal("open")
-    task.add(open_gripper_place)
+    open_hand_place = stages.MoveTo("open_hand_place", planner)
+    open_hand_place.group = "hand"
+    open_hand_place.setGoal("open")
+    task.add(open_hand_place)
 
     return task
 
@@ -87,6 +87,9 @@ end_pose.pose.orientation.w = 1.0
 task = create_pick_and_place_task(start_pose, end_pose)
 
 if task.plan():
-    task.execute()
+    solutions = task.solutions
+    if solutions:
+        solution = solutions[0]
+        task.execute(solution)
 
 moveit_commander.roscpp_shutdown()
