@@ -1,5 +1,7 @@
 #include <EEPROM.h>
 
+
+
 #include "orm.h"
 /*
 AccelStepper j0(1,X_STEP_PIN,X_DIR_PIN);
@@ -18,6 +20,8 @@ Servo js5;  // Joint Servo 5
 
 Servo gripperServo;
 
+const int ADC_MAX = 675;
+
 const char osp_command_template[] = {0xFF, 0xAA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x55, 0x77};
 
 //const int ORM_J_ENCODER_INPUT[JOINTS_COUNT] = {X_ENCODER_IN,Y_ENCODER_IN, Z_ENCODER_IN, E_ENCODER_IN, Q_ENCODER_IN, W_ENCODER_IN} ;/*A1,A2,A3,A4,A5};*/
@@ -28,7 +32,11 @@ const short orm_j_angle_max = 1023;
 */
 const int ORM_J_SERVO_PINS[JOINTS_COUNT] = {2,3,4,5,6,7};
 
+const int ORM_J_ADC_PINS[JOINTS_COUNT] = {A0,A1,A2,A3,A4,A5};
+
 const int EEPROM_ANGLE_WIDTH_OFFSET = 32;
+
+const int EEPROM_DEFAULT_ANGLE_OFFSET = 64;
 
 //AccelStepper j0(1,X_STEP_PIN,X_DIR_PIN);
 
@@ -70,9 +78,11 @@ void ORM::cmdSetAngle(){
 void ORM::cmdSetAngle(){
   int actuator_no = osp_input_buffer[OSP_BYTE_PARAM_INDEX];
   int angle = ((int)(osp_input_buffer[OSP_ORM_ANGLE_MSB_INDEX]) << 8) | osp_input_buffer[OSP_ORM_ANGLE_LSB_INDEX];
+  char force = osp_input_buffer[OSP_ORM_ANGLE_FORCE_INDEX];
 
   if (actuator_no >=0 && actuator_no<JOINTS_COUNT){
     j_angle_desired[actuator_no] = angle;
+    j_angle_force[actuator_no] = force;
   }
 
   if (actuator_no == GRIPPER_JOINT_NO) {
@@ -105,6 +115,15 @@ void ORM::cmdSetAngleWidth(){
   }
 }
 
+void ORM::cmdSetMotorPower(){
+  char motor_power_param = osp_input_buffer[OSP_BYTE_PARAM_INDEX];
+  motor_power = motor_power_param;
+  if (motor_power!=0){
+    digitalWrite(MOTOR_POWER_PIN,LOW);
+  } else {
+    digitalWrite(MOTOR_POWER_PIN,HIGH);
+  }
+}
 
 void ORM::ospHandleORMCommand(){
   // 
@@ -121,6 +140,9 @@ void ORM::ospHandleORMCommand(){
   if (cmd == OSP_ORM_CMD_SET_ANGLE_WIDTH) {
     cmdSetAngleWidth();
   }
+  if (cmd == OSP_ORM_CMD_SET_MOTOR_POWER){
+    cmdSetMotorPower();
+  }
 }
 
 void ORM::ospHandleCommand(){
@@ -135,6 +157,7 @@ void ORM::ospHandleCommand(){
   } else {
     // ERROR CONDITION. THE CLIENT MUST NOT SEND THE COMMAND WHICH ARE NOT FOR EITHER GENERIC OR CURRENT DEV TYPE
     // DOING NOTHING FOR NOW
+    ospHandleORMCommand();
   }
 }
 
@@ -147,7 +170,7 @@ void ORM::ospPrepareOutputBuffer(){
 void ORM::ormInfoCurrentAngle(int actuatorNo){
   ospPrepareOutputBuffer();
     
-  unsigned int angle = j_angle_current[actuatorNo]; 
+  unsigned int angle = j_angle_read[actuatorNo]; 
 
   osp_output_buffer[OSP_MSG_DEV_INDEX] = OSP_DEV_ORM;
   osp_output_buffer[OSP_MSG_CMD_INDEX] = OSP_ORM_INFO_ANGLE;
@@ -186,6 +209,19 @@ void ORM::ormInfoCurrentSpeed(int actuatorNo){
   Serial.write(osp_output_buffer, OSP_COMMAND_LENGTH);
 }
 
+void ORM::ormInfoIRStatus(){
+  ospPrepareOutputBuffer(); 
+
+  osp_output_buffer[OSP_MSG_DEV_INDEX] = OSP_DEV_ORM;
+  osp_output_buffer[OSP_MSG_CMD_INDEX] = OSP_ORM_INFO_IR_STATUS;
+  osp_output_buffer[OSP_BYTE_PARAM_INDEX] = 0;
+  osp_output_buffer[OSP_BYTE_PARAM_INDEX+1] = 0;
+  osp_output_buffer[OSP_BYTE_PARAM_INDEX+2] = 0;
+  osp_output_buffer[OSP_BYTE_PARAM_INDEX+3] = 0;
+  
+  Serial.write(osp_output_buffer, OSP_COMMAND_LENGTH);
+}
+
 void ORM::ormInfoJointStatus(int actuatorNo) {
   short int status_word = 0;
   // Forming the status byte
@@ -216,7 +252,9 @@ void ORM::sendUpdateInfo(){
       ormInfoCurrentAngle(i);
       ormInfoCurrentSpeed(i);
       ormInfoJointStatus(i);
+      
     }
+    ormInfoIRStatus();
     // Gripper Angle Update
     ormInfoGripperAngle();
     last_millis = current_millis;
@@ -301,22 +339,37 @@ void ORM::updateActuatorsPosition(){
 
     // Speed Control Routine
     for(int i=0;i<JOINTS_COUNT;i++){
-      long angle_diff = j_angle_desired[i] - j_angle_current[i];
+      if (motor_power == 0){
+        // If no motor power - just apply the same angle that is currenrly read 
+        j_angle_current[i] = j_angle_read[i];
+        j_angle_desired[i] = j_angle_read[i];
+        j_speed_current[i] = 0;
+        continue;
+      }
+
+      if(j_angle_force[i]){
+        // If the angle is forced - apply it immediately, no acceleration logic
+        j_angle_current[i] = j_angle_desired[i];
+        j_speed_current[i] = 0;
+        continue;        
+      }
+
+      long angle_diff = j_angle_desired[i] - j_angle_read[i];
       long direction = sgn(angle_diff);
 
-      long accelerate_speed = j_speed_current[i] + direction*(long)orm_j_acceleration[i]*(long)ORM_SPEED_UPDATE_INTERVAL_MS / (long)ORM_MS_IN_SECOND;
+      long accelerate_speed =(long)j_speed_current[i] + direction*(long)orm_j_acceleration[i]*(long)ORM_SPEED_UPDATE_INTERVAL_MS / (long)ORM_MS_IN_SECOND;
 
       long abs_angle_diff = angle_diff * direction;
 
       if (abs_angle_diff < js_small_angle_threshold[i]) {
-        j_angle_current[i] = j_angle_desired[i];
+        //j_angle_current[i] = j_angle_desired[i];
         j_speed_current[i] = 0;
         continue;        
       }
 
       long sqrt_angle_diff = isqrt(abs_angle_diff);
 
-      long deaccelerate_speed = (long)direction*(long)sqrt_angle_diff * (long)ORM_SPEED_UPDATE_INTERVAL_MS*(long)orm_j_acceleration[i] / (long)ORM_MS_IN_SECOND; 
+      float deaccelerate_speed = (long)direction*(long)sqrt_angle_diff * (long)ORM_SPEED_UPDATE_INTERVAL_MS*(long)orm_j_acceleration[i] / (long)ORM_MS_IN_SECOND; 
       
       long max_speed = direction * orm_j_speed_max[i];
 
@@ -325,13 +378,13 @@ void ORM::updateActuatorsPosition(){
       j_speed_current[i] = direction*result_speed;
       
       // Do not limit to the desired angle only. Allow to pass over the desired angle if deacceleration is not possible
-      long new_angle = (long)j_angle_current[i] + (long)j_speed_current[i]*(long)ORM_SPEED_UPDATE_INTERVAL_MS / (long)ORM_MS_IN_SECOND ;
+      float new_angle = (long)j_angle_current[i] + (long)j_speed_current[i]*(long)ORM_SPEED_UPDATE_INTERVAL_MS / (long)ORM_MS_IN_SECOND ;
       long new_angle_diff = j_angle_desired[i] - new_angle;
-      if(new_angle_diff * angle_diff < 0){
-        j_angle_current[i] = j_angle_desired[i];
-      } else {
+      //if(new_angle_diff * angle_diff < 0){
+        //j_angle_current[i] = j_angle_desired[i];
+      //} else {
          j_angle_current[i] = new_angle;  // Update the angle
-      }
+      //}
     }
   }
 
@@ -371,8 +424,37 @@ void ORM::updateActuatorsPosition(){
   gripper_servo->write(servo_angle);
 }
 
+
+void ORM::updateSensorsMeasurements(){
+  for (int i=0;i<JOINTS_COUNT;i++){
+    int adc_read = analogRead(ORM_J_ADC_PINS[i]);
+    int angle_int = orm_max_int_angle * adc_read  / ADC_MAX;
+    j_angle_read_samples[i][j_angle_samples_ptr] = angle_int;
+  }
+  j_angle_samples_ptr++;
+  j_angle_samples_ptr %= ADC_SAMPLES_N;
+  if(j_angle_samples_count<ADC_SAMPLES_N){
+    j_angle_samples_count++;
+  }
+  for(int i=0;i<JOINTS_COUNT;i++){
+    long int sum = 0;
+    for (int j=0;j<j_angle_samples_count;j++){
+      sum += j_angle_read_samples[i][j];
+    }
+    int filtered_angle = sum / j_angle_samples_count;
+
+    filtered_angle = (float) j_angle_width[i] * (float)(filtered_angle - servo_zero_angle[i]) / (float)(servo_max_angle[i]-servo_zero_angle[i]);
+
+    filtered_angle = filtered_angle-j_angle_correction[i];
+    j_angle_read[i] = filtered_angle;
+    //j_angle_desired[i] = j_angle_read[i];
+  }
+
+}
+
 void ORM::ospSerialLoop(){
-  if(Serial.available()){
+
+  while(Serial.available()){
     char b = Serial.read();
     if(osp_command_template[osp_ptr]==b || osp_command_template[osp_ptr]==0){
       osp_input_buffer[osp_ptr] = b;
@@ -386,6 +468,7 @@ void ORM::ospSerialLoop(){
     }
     
   }
+  updateSensorsMeasurements();
   updateActuatorsPosition();
   sendUpdateInfo();
   /*
@@ -397,13 +480,21 @@ void ORM::ospSerialLoop(){
 }
 
 void ORM::setup(){
+
   Serial.begin(115200);
   Serial.setTimeout(0.01);
 
-  analogReference(EXTERNAL);
+  //analogReference(EXTERNAL);
 
   last_millis = millis();
   speed_millis = millis();
+
+  pinMode(MOTOR_POWER_PIN, OUTPUT);
+  if (motor_power!=0){
+    digitalWrite(MOTOR_POWER_PIN,LOW);
+  } else {
+    digitalWrite(MOTOR_POWER_PIN,HIGH);
+  }
   /*
   joints[0] = &j0;
   joints[1] = &j1;
@@ -450,6 +541,8 @@ void ORM::setup(){
    if(j_angle_width[i]<=0) {
      j_angle_width[i] = 16384;
    }
+
+   EEPROM.get(EEPROM_DEFAULT_ANGLE_OFFSET+i*sizeof(short),j_angle_desired[i]); 
  }
 }
 

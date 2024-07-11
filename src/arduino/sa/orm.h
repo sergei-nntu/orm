@@ -15,7 +15,7 @@
 
 #define ORM_SPEED_MAX             4000  // 360 * 1000 / 16000 = 22.5 degrees per second 
 
-#define ORM_SPEED_UPDATE_INTERVAL_MS 25   // ms
+#define ORM_SPEED_UPDATE_INTERVAL_MS 50   // ms
 
 #define ORM_ACCELERATION_MAX      2000 // 360 * 1000 / 16000 = 22.5 degrees per second^2
 
@@ -25,6 +25,10 @@
 
 // Update Interval in Milliseconds
 #define UPDATE_INTERVAL  100 // 10 Hz
+
+#define ADC_SAMPLES_N  30
+
+#define MOTOR_POWER_PIN   13
 
 // Convenience sign function
 #define sgn(x) ((x) < 0 ? -1 : ((x) > 0 ? 1 : 0))
@@ -39,10 +43,12 @@ const long orm_180_angle_width = orm_max_int_angle/2;
 
 const short orm_j_stepper_full_rot[JOINTS_COUNT] = {16000, 16000 ,16000, 9780, 9780, 9780};  // Number of steps to reach 2*Pi Angle
 
-const short orm_j_speed_max[JOINTS_COUNT] =     {4000, 4000, 4000, 8000, 8000, 8000};
+const short orm_j_speed_max[JOINTS_COUNT] =     {4000, 4000, 4000, 4000, 4000, 4000};
 const short orm_j_speed_min[JOINTS_COUNT] =     {400, 400, 400, 400, 400, 400};
-const short orm_j_acceleration[JOINTS_COUNT] =  {4000, 4000, 4000, 8000, 8000, 8000};
+const short orm_j_acceleration[JOINTS_COUNT] =  {1000, 1000, 4000, 1000, 1000, 1000};
 
+const int servo_zero_angle[JOINTS_COUNT] = {28500,30500,2700,2700,2700,2700};
+const int servo_max_angle[JOINTS_COUNT] = {2700,2700,30500,30500,30500,30500};
 
 class ORM {
   private:
@@ -66,9 +72,17 @@ class ORM {
     short j_angle_read[JOINTS_COUNT] =      {0, 0, 0, 0, 0, 0};
     short j_angle_correction[JOINTS_COUNT] ={0, 0, 0, 0, 0, 0};
     short j_angle_width[JOINTS_COUNT] =     {0, 0, 0, 0, 0, 0};
+    char  j_angle_force[JOINTS_COUNT] =     {0, 0, 0, 0, 0, 0};
     short j_callibr_left[JOINTS_COUNT] = {2, 2, 2, 2, 2, 2};
     short js_angle_scale_factor[JOINTS_COUNT] = {1024,1024,682,682,1024,682}; // Scale factor to be applied prior to sending the angle to servos
-    short js_small_angle_threshold[JOINTS_COUNT] = {100, 100, 100, 100, 100, 100}; // If the difference between the desired and the current angle does not exceed this value - do not apply the acceleration.
+    short js_small_angle_threshold[JOINTS_COUNT] = {150, 150, 150, 150, 150, 150}; // If the difference between the desired and the current angle does not exceed this value - do not apply the acceleration.
+
+    short j_angle_read_samples[JOINTS_COUNT][ADC_SAMPLES_N];
+    short j_angle_samples_ptr = 0;
+    short j_angle_samples_count = 0;
+
+
+    char motor_power = 1;
 
     // GRIPPER CONTROL VARIABLES
     short gripper_angle = 0; // INT ANGLE -16384 .. 16383
@@ -89,6 +103,7 @@ class ORM {
     void            ospHandleCommand();
     void            sendUpdateInfo();   
     void            updateActuatorsPosition(); 
+    void            updateSensorsMeasurements();
 
     // Incoming Command Processing Functions
     void ospHandleORMCommand();
@@ -99,6 +114,7 @@ class ORM {
     void cmdMakeSteps();
     void cmdSetCorrAngle();
     void cmdSetAngleWidth();
+    void cmdSetMotorPower();
 
     // Outcoming Commands Generation Functinos
     void ospPrepareOutputBuffer();
@@ -106,7 +122,7 @@ class ORM {
     void ormInfoCurrentSpeed(int actuatorNo);
     void ormInfoJointStatus(int actuatorNo);
     void ormInfoGripperAngle();
-
+    void ormInfoIRStatus();
     // Data Input Function
     short readAngle(int actuatorNo);
 
