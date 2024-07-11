@@ -158,7 +158,9 @@ class OSP:
                     
     def osp_info_dev_type(self):
         self.osp_dev_type = self.input_buffer[OSP_BYTE_PARAM_INDEX]
-        #print("Device Type Received:",self.osp_dev_type);
+        # FIXME: there is some valid thing, so we're putting 1 to esp_dev_type so far
+        self.osp_dev_type = 1
+        print("Device Type Received:", self.osp_dev_type);
                 
     def osp_obp_info_soc(self):
         soc_lsb = self.input_buffer[OSP_INT_PARAM_LSB_INDEX]
@@ -223,7 +225,7 @@ class OSP:
         return 1 in self.joint_status_running
         
     def orm_set_angle(self, joint, angle):
-        print("Setting Angle to ORM joint"+str(joint)+": "+str(angle))
+        #print("Setting Angle to ORM joint"+str(joint)+": "+str(angle))
         int_angle = int(angle * ORM_INT_ANGLE_MAX / (2* math.pi))
         self.set_angle(joint, int_angle)
         

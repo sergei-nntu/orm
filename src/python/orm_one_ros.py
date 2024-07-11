@@ -4,9 +4,12 @@ import time
 from datetime import datetime
 #from we_r2_robot import RobotWeR2
 from osp import OSP
-from moveit_msgs.msg import ExecuteTrajectoryActionGoal
+from moveit_msgs.msg import ExecuteTrajectoryActionGoal, DisplayTrajectory
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Float32
+
+import threading
+from tkinter.constants import CURRENT
 
 JOINT_NAMES = ['joint0', 'joint1', 'joint2', 'joint3', 'joint4', 'joint5']
 
@@ -18,6 +21,8 @@ STATUS_CHECK_TIMEOUT = 0.2 # Seconds # 5 Hz
 MAX_WAIT_ITERATION = 1*1  # Corresponds to 1 second
 
 TIME_SCALE_FACTOR = 1.0
+
+scheduled_trajectory = None
 
 def apply_trajectory(joint_names, points):
     print("Applying Trajectory: "+str(points))
@@ -44,21 +49,34 @@ def apply_trajectory(joint_names, points):
         time.sleep(time_diff * TIME_SCALE_FACTOR)
         for i in range(0,len(point.positions)):
             position = point.positions[i]
-            prev_position = prev_point.positions[i]
-            speed = (position - prev_position) / (time_diff * TIME_SCALE_FACTOR)
-            orm.orm_set_speed(i, abs(speed))
+            #prev_position = prev_point.positions[i]
+            #speed = (position - prev_position) / (time_diff * TIME_SCALE_FACTOR)
+            #orm.orm_set_speed(i, abs(speed))
             orm.orm_set_angle(i, position)
             print("JOINT_"+str(i)+" POSITION = "+str(position))
         prev_time = curr_time 
         prev_point = point   
         
-    for i in range(0,len(prev_point.positions)): 
-        orm.set_speed(i, 1024) # Angle correction speed  
+    #for i in range(0,len(prev_point.positions)): 
+    #    orm.set_speed(i, 1024) # Angle correction speed  
       	    
 
+def trajectory_applying_thread():
+    global scheduled_trajectory
+    current_trajectory = None
+    while True:
+        if scheduled_trajectory is not None:
+            if current_trajectory!=scheduled_trajectory:
+                current_trajectory = scheduled_trajectory
+                apply_trajectory(current_trajectory.joint_names, current_trajectory.points)
+        time.sleep(0.1)
+        
+
 def joint_trajectory_callback(msg):
+    global scheduled_trajectory
     print(str(msg))
-    #apply_trajectory(msg.goal.trajectory.joint_trajectory.joint_names, msg.goal.trajectory.joint_trajectory.points)
+    scheduled_trajectory = msg.trajectory[0].joint_trajectory
+    apply_trajectory(msg.trajectory[0].joint_trajectory.joint_names, msg.trajectory[0].joint_trajectory.points)
     #for joint_name in msg.name:
     #    if joint_name in JOINT_NAMES:
     #        # index of actuator
@@ -81,11 +99,11 @@ def joint_states_callback(msg):
     delta = current_time - last_time 
     if delta.total_seconds() > 0.05:
         last_time = current_time
-        print("JointState: "+str(msg))
+        #print("JointState: "+str(msg))
         for i in range(0,len(msg.position)):
             name = msg.name[i]
             joint_index = JOINT_NAMES.index(name)
-            orm.orm_set_angle(joint_index, msg.position[i])
+            #orm.orm_set_angle(joint_index, msg.position[i])
     
 
 def gripper_state_callback(msg):
@@ -95,9 +113,13 @@ def gripper_state_callback(msg):
 rospy.init_node("we_r2_control")
 #we_r2 = RobotWeR2()
 
-rospy.Subscriber('/execute_trajectory/goal', ExecuteTrajectoryActionGoal, joint_states_callback)
-rospy.Subscriber('/joint_states', JointState, joint_states_callback)
+#rospy.Subscriber('/execute_trajectory/goal', ExecuteTrajectoryActionGoal, joint_trajectory_callback)
+rospy.Subscriber('/move_group/display_planned_path', DisplayTrajectory, joint_trajectory_callback)
+#rospy.Subscriber('/joint_states', JointState, joint_states_callback)
 rospy.Subscriber('/gripper_state', Float32, gripper_state_callback)
+
+t = threading.Thread(target=trajectory_applying_thread, daemon=True)
+t.start()
 rospy.spin()
 
    
