@@ -15,12 +15,12 @@ if __name__ == '__main__':
     try:
         app = create_app()
 
-        host = os.getenv("APP_HOST", "0.0.0.0")
-        port = int(os.getenv("APP_PORT", "5001"))
+        host = app.config.get('HOST', '0.0.0.0')
+        port = app.config.get('PORT', 5000)
 
         logger.info(f"Running on {host}:{port}")
 
-        app.run(host="0.0.0.0", port=5001)
+        app.run(host=host, port=port)
     except KeyboardInterrupt:
         logger.info("Application interrupted by user.")
     except Exception as e:
