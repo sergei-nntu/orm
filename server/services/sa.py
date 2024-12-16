@@ -72,7 +72,7 @@ class ArmOne:
     def makeSteps(self,actuator_no, steps_count):
     	command_buffer = self.command_buffer_pattern.copy()
     	
-    	command_buffer[2] = ARM1_COMMAND_MAKE_STEP
+        command_buffer[2] = ARM1_COMMAND_MAKE_STEP
     	command_buffer[3] =  actuator_no
     	command_buffer[4] = steps_count & 0xFF
     	command_buffer[5] = (steps_count >> 8) & 0xFF
