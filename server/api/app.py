@@ -19,7 +19,9 @@ def create_app(test_config=None, instance_config=False):
         # load the test config if passed in
         app.config.update(test_config)
 
-    # TODO: register blueprints right here
+    # Register blueprints right here
+    from .routes import register_blueprints
+    register_blueprints(app)
 
     # ensure the instance folder exists
     try:
