@@ -55,31 +55,31 @@ OQP_JOINTS = {}
 
 current_pose_state = dict(x=0, y=0.1, z=0.4, pitch=0, roll=0, yaw=0)
 
-
-def detect_tf(data):
-    start = time.time()
-    for m in data.transforms:
-        id = m.fiducial_id
-        trans = m.transform.translation
-        rot = m.transform.rotation
-        rospy.loginfo(rospy.get_caller_id() + "\n%s", trans)
-
-        pose_goal = geometry_msgs.msg.Pose()
-
-        scale = 0.3
-        pose_goal.orientation.w = 1.0
-        pose_goal.position.x = round(trans.x / 3, 8)
-        pose_goal.position.y = round(trans.z / 3, 8)
-        pose_goal.position.z = abs(round(trans.y / 3, 8)) + scale
-
-        group.set_pose_target(pose_goal)
-
-        success = group.go(wait=True)
-        print("Progress...", success)
-
-        # group.clear_pose_targets()
-        end = time.time()
-        print("Time:", end - start)
+# FIXME: remove the commented code
+# def detect_tf(data):
+#     start = time.time()
+#     for m in data.transforms:
+#         id = m.fiducial_id
+#         trans = m.transform.translation
+#         rot = m.transform.rotation
+#         rospy.loginfo(rospy.get_caller_id() + "\n%s", trans)
+#
+#         pose_goal = geometry_msgs.msg.Pose()
+#
+#         scale = 0.3
+#         pose_goal.orientation.w = 1.0
+#         pose_goal.position.x = round(trans.x / 3, 8)
+#         pose_goal.position.y = round(trans.z / 3, 8)
+#         pose_goal.position.z = abs(round(trans.y / 3, 8)) + scale
+#
+#         group.set_pose_target(pose_goal)
+#
+#         success = group.go(wait=True)
+#         print("Progress...", success)
+#
+#         # group.clear_pose_targets()
+#         end = time.time()
+#         print("Time:", end - start)
 
 
 def joint_states_callback(msg):
