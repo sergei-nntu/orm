@@ -4,6 +4,7 @@ blockly = Blueprint('blockly', __name__)
 
 
 @blockly.route('/test', methods=('GET'))
+def test():
     return 'This is a test route.'
 
 # TODO: release these routes
