@@ -1,6 +1,7 @@
 import os
 
-from flask import Flask
+from flask import Flask, g
+from dao import Db
 
 
 def create_app(test_config=None, instance_config=False):
@@ -18,6 +19,24 @@ def create_app(test_config=None, instance_config=False):
     else:
         # load the test config if passed in
         app.config.update(test_config)
+
+    # TODO: define default params
+    db_path = app.config.get('DB_PATH')
+    schema_path = app.config.get('SCHEMA_PATH')
+
+    # Initialize the Db instance and store it in app context
+    app.db = Db(db_path, schema_path)
+
+    # Initialize the database schema if it doesn't exist
+    app.db.initialize_db()
+
+    @app.before_request
+    def before_request():
+        g.db = app.db
+
+    @app.teardown_request
+    def teardown_request(exception):
+        g.pop('db', None)
 
     # Register blueprints right here
     from .routes import register_blueprints
