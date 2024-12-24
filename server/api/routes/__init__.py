@@ -1,2 +1,4 @@
 def register_blueprints(app):
-    pass
+    from .blockly import blockly
+
+    app.register_blueprint(blockly, url_prefix='/blockly')

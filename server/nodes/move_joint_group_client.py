@@ -1,5 +1,7 @@
+#!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
+from rclpy.logging import get_logger
 from rclpy.action import ActionClient
 from we_r2_arm_interfaces.action import MoveJointGroup
 
@@ -12,11 +14,10 @@ class MoveJointGroupClient(Node):
     def send_goal(self, joint_position_group, joints_position):
         goal_msg = MoveJointGroup.Goal()
         goal_msg.joints_position = joints_position
+        goal_msg.joint_position_group = joint_position_group
 
         self.get_logger().info(
-            f'Sending goal:
-            joints_position={joints_position},
-            joint_position_group={joint_position_group}'
+            f'Sending goal: joints_position={joints_position}, joint_position_group={joint_position_group}'
         )
 
         self._action_client.wait_for_server()
@@ -41,7 +42,7 @@ class MoveJointGroupClient(Node):
 
     def get_result_callback(self, future):
         result = future.result().result
-        self.get_logger().info(f'Result: success={result.success}, message={message}')
+        self.get_logger().info(f'Result: success={result.success}, message={result.message}')
         rclpy.shutdown()
 
 
@@ -57,8 +58,7 @@ def main(args=None):
 
         node = MoveJointGroupClient()
 
-        # FIXME: add valid args to the send_goal()
-        # node.send_goal()
+        node.send_goal('arm', [1.17, 0.0, 0.0, 0.14])
 
         rclpy.spin(node)
     except KeyboardInterrupt:
