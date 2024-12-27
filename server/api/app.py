@@ -3,6 +3,8 @@ import os
 from flask import Flask, g
 from dao import Db
 
+from .utils import configure_logging
+
 
 def create_app(test_config=None, instance_config=False):
     app = Flask(__name__, instance_relative_config=instance_config)
@@ -29,6 +31,9 @@ def create_app(test_config=None, instance_config=False):
 
     # Initialize the database schema if it doesn't exist
     app.db.initialize_db()
+
+    # Configure logging
+    configure_logging()
 
     @app.before_request
     def before_request():
