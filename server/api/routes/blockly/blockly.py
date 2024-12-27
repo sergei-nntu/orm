@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, g
+from flask import Blueprint, jsonify, g
 
 
 blockly = Blueprint('blockly', __name__)
@@ -6,29 +6,17 @@ blockly = Blueprint('blockly', __name__)
 
 @blockly.route('/programs', methods=['GET'])
 def get_blockly_programs():
-    query = "SELECT id, username FROM user"
+    query = "SELECT id, program_name FROM programs"
     try:
-        users = g.db.execute(query)
-        return jsonify({'users': users}), 200
+        programs = g.db.execute(query)
+        return jsonify({'programs': programs}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
 @blockly.route('/start', methods=['POST'])
 def start_blockly_program():
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-    
-    if not username or not password:
-        return jsonify({'error': 'Username and password are required'}), 400
-    
-    query = "INSERT INTO user (username, password) VALUES (?, ?)"
-    try:
-        user_id = g.db.execute(query, (username, password))
-        return jsonify({'message': 'User added', 'user_id': user_id}), 201
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    return 'Start selected program'
 
 
 @blockly.route('/stop', methods=['POST'])
