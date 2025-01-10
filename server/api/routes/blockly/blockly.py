@@ -5,6 +5,10 @@ from flask import Blueprint, jsonify, g
 blockly = Blueprint('blockly', __name__)
 logger = logging.getLogger(__name__)
 
+blockly_thread = None
+program_running = None
+should_program_terminate = False
+
 
 @blockly.route('/programs', methods=['GET'])
 def get_blockly_programs():
@@ -20,6 +24,10 @@ def get_blockly_programs():
 
 @blockly.route('/start', methods=['POST'])
 def start_blockly_program():
+    # Algorithm
+    # 1) Validate the input data
+    # 2) Get the program from the data base by id
+    # 3) Launch the program in the tread
     return 'Start selected program'
 
 
