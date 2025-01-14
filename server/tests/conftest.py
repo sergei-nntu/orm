@@ -1,0 +1,19 @@
+import pytest
+from api import create_app
+
+# NOTE: use command `pytest` in cli to run all tests
+@pytest.fixture
+def app():
+    app = create_app()
+
+    yield app
+
+
+@pytest.fixture
+def client(app):
+    return app.test_client()
+
+
+@pytest.fixture
+def runner(app):
+    return app.test_cli_runner()
