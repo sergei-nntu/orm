@@ -16,4 +16,4 @@ STL Files: `mechanics/ORM-1. PT1/`
 To run the server tests, use the following command:
 
 ```bash
-pytest
+pytest -v
