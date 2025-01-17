@@ -2,7 +2,7 @@ import os
 
 DEBUG = True
 HOST = '0.0.0.0'
-PORT = 5000
+PORT = 5001
 SECRET_KEY = ''
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
