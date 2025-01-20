@@ -14,9 +14,26 @@ def test_stop_program(client):
     assert b"Stop" in response.data
 
 def test_delete_program(client):
-    query_params = {"id": "11"}
-    response = client.delete('/blockly', query_string=query_params)
+    # Add the item
+    body = {
+        'program_name': 'Test program name' + str(datetime.now()),
+        'program_description': 'Test program description',
+        'program_structure': 'Test program structure',
+        'is_running': '0',
+    }
+    add_response = client.post('/blockly', json=body)
+    assert response.status_code == 201
+
+    # FIXME: unique_id should be gotten from add_response
+    unique_id = 11
+    query_params = {"id": unique_id}
+
+    # Delete the item
+    delete_response = client.delete('/blockly', query_string=query_params)
     assert response.status_code == 200
+
+    # Verify the item no longer exists
+    # TODO: get the item by id
 
 def test_get_programs(client):
     response = client.get('/blockly')
