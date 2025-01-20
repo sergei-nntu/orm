@@ -2,25 +2,25 @@ from datetime import datetime
 
 def test_start_program(client):
     """Test the /blockly/start route."""
-    data = {"id": "5"}
+    data = {'program': 'program', 'structure': 'structure'}
     response = client.post('/blockly/start', json=data)
     assert response.status_code == 200
 
     response_data = response.json
     assert response_data['status'] == 'success'
 
-def test_start_program_without_id(client):
+def test_start_program_without_program_or_structure(client):
     response = client.post('/blockly/start', json={})
     assert response.status_code == 400
 
     response_data = response.json
     
     assert response_data['status'] == 'error'
-    assert response_data['message'] == "The program ID was not provided in the request"
+    assert response_data['message'] == "Both 'program' and 'structure' must be provided in the request"
     assert response_data['data'] is None
 
 def test_start_program_with_invalid_id(client):
-    response = client.post('/blockly/start', json={"id": 9999})
+    response = client.get('/blockly/99999')
     assert response.status_code == 400
 
     response_data = response.json

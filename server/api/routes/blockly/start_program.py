@@ -2,36 +2,28 @@ from flask import request
 
 from dao import BlocklyDAO
 from api.utils import JsonResponse
+from services import BlocklyService
 
 
 def start_program():
     try:
         data = request.get_json()
-        id = data.get('id')
 
-        # 1) Validate the input data
-        if not id:
+        program = data.get('program')
+        structure = data.get('structure')
+
+        if not program or not structure:
             return JsonResponse(
                 status="error",
-                message=f"The program ID was not provided in the request"
+                message=f"Both 'program' and 'structure' must be provided in the request"
             ).to_json(400)
+        
+        blockly = BlocklyService()
 
-        # 2) Get the program from the data base by id
-        dao = BlocklyDAO()
-        program_data = dao.get_program(id)
+        blockly.write_program_to_file(program)
+        blockly.set_active_program_structure(structure)
 
-        # 3) Validate the program data from dao
-        if not program_data:
-             return JsonResponse(
-                status="error",
-                message=f"No program found with the provided ID"
-            ).to_json(400)
-
-        print(data)
-        # Algorithm
-        # 3) Launch the program in the tread
-
-        response = JsonResponse(status='success', data=data, message='Request processed successfully')
+        response = JsonResponse(status='success', data={}, message='Request processed successfully')
         return response.to_json(200)
 
     except KeyError as e:
@@ -43,3 +35,5 @@ def start_program():
         error_message = f"An unexpected error occurred: {str(e)}"
         response = JsonResponse(status="error", message="Unexpected error", error=error_message)
         return response.to_json(500)
+    
+    
