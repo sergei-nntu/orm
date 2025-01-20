@@ -1,8 +1,20 @@
+import os
+import json
+
 from datetime import datetime
+
 
 def test_start_program(client):
     """Test the /blockly/start route."""
-    data = {'program': 'program', 'structure': 'structure'}
+
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data', 'program.txt'), 'r') as program_file:
+        program = program_file.read()
+
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data', 'structure.json'), 'r') as structure_file:
+        structure = json.load(structure_file)
+
+    data = {'program': program, 'structure': structure}
+
     response = client.post('/blockly/start', json=data)
     assert response.status_code == 200
 
@@ -19,7 +31,7 @@ def test_start_program_without_program_or_structure(client):
     assert response_data['message'] == "Both 'program' and 'structure' must be provided in the request"
     assert response_data['data'] is None
 
-def test_start_program_with_invalid_id(client):
+def test_get_program_with_invalid_id(client):
     response = client.get('/blockly/99999')
     assert response.status_code == 400
 

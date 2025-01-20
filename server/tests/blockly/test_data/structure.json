@@ -1,0 +1,46 @@
+{
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "controls_whileUntil",
+          "id": "OG,})cCe(Y0}Kk{zo`Gt",
+          "x": 362,
+          "y": 180,
+          "fields": {
+            "MODE": "WHILE"
+          },
+          "inputs": {
+            "BOOL": {
+              "block": {
+                "type": "logic_boolean",
+                "id": "PiV1gqtX!;pZ1YIdDQt?",
+                "fields": {
+                  "BOOL": "TRUE"
+                }
+              }
+            },
+            "DO": {
+              "block": {
+                "type": "set_gripper_state",
+                "id": "y$#=B{OK_REU5j(*cXQe",
+                "fields": {
+                  "STATE": 20
+                },
+                "next": {
+                  "block": {
+                    "type": "delay",
+                    "id": "5D)RNHP.PHUGjUQjaq.V",
+                    "fields": {
+                      "DELAY": 1000
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+  
