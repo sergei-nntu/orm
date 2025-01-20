@@ -2,10 +2,32 @@ from datetime import datetime
 
 def test_start_program(client):
     """Test the /blockly/start route."""
-    data = {"id": "1"}
+    data = {"id": "5"}
     response = client.post('/blockly/start', json=data)
     assert response.status_code == 200
-    assert b"Start" in response.data
+
+    response_data = response.json
+    assert response_data['status'] == 'success'
+
+def test_start_program_without_id(client):
+    response = client.post('/blockly/start', json={})
+    assert response.status_code == 400
+
+    response_data = response.json
+    
+    assert response_data['status'] == 'error'
+    assert response_data['message'] == "The program ID was not provided in the request"
+    assert response_data['data'] is None
+
+def test_start_program_with_invalid_id(client):
+    response = client.post('/blockly/start', json={"id": 9999})
+    assert response.status_code == 400
+
+    response_data = response.json
+    
+    assert response_data['status'] == 'error'
+    assert response_data['message'] == "No program found with the provided ID"
+    assert response_data['data'] is None
 
 def test_stop_program(client):
     """Test the home page route."""
