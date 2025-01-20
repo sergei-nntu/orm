@@ -22,7 +22,7 @@ def test_delete_program(client):
         'is_running': '0',
     }
     add_response = client.post('/blockly', json=body)
-    assert response.status_code == 201
+    assert add_response.status_code == 201
 
     # FIXME: unique_id should be gotten from add_response
     unique_id = 11
@@ -30,7 +30,7 @@ def test_delete_program(client):
 
     # Delete the item
     delete_response = client.delete('/blockly', query_string=query_params)
-    assert response.status_code == 200
+    assert delete_response.status_code == 200
 
     # Verify the item no longer exists
     # TODO: get the item by id
@@ -41,14 +41,17 @@ def test_get_programs(client):
 
 def test_save_program(client):
     body = {
-        'program_name': 'Test program_name' + str(datetime.now()),
-        'program_description': 'Test program_description',
-        'program_structure': 'Test program_structure',
+        'program_name': 'Test program name' + str(datetime.now()),
+        'program_description': 'Test program description',
+        'program_structure': 'Test program structure',
         'is_running': '0',
     }
 
     response = client.post('/blockly', json=body)
-    assert response.status_code == 200
+    assert response.status_code == 201
+
+    response_data = response.json
+    assert response_data['status'] == 'success'
 
 def test_update_program(client):
     query_params = {"id": "14"}
