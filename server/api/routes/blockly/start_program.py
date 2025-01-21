@@ -17,7 +17,7 @@ def start_program():
                 status="error",
                 message=f"Both 'program' and 'structure' must be provided in the request"
             ).to_json(400)
-        
+
         blockly = BlocklyService()
 
         blockly.write_program_to_file(program)

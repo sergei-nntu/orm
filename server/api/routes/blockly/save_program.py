@@ -9,6 +9,7 @@ def save_program():
     try:
         data = request.get_json()
 
+        # TODO: validate request data
         program_data = {
             'name': data.get('program_name'),
             'description': data.get('program_description'),
