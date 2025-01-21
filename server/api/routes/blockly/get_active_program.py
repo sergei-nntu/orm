@@ -1,3 +1,5 @@
+from api.utils import JsonResponse
+
 # FIXME: active -> current
 def get_active_program():
     try:

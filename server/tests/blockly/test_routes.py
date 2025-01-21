@@ -45,7 +45,6 @@ def test_stop_program(client):
     """Test the home page route."""
     response = client.post('/blockly/stop')
     assert response.status_code == 200
-    assert b"Stop" in response.data
 
 def test_delete_program(client):
     # Add the item

@@ -1,6 +1,5 @@
 from flask import request
 
-from dao import BlocklyDAO
 from api.utils import JsonResponse
 from services import BlocklyService
 
