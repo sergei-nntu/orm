@@ -42,9 +42,12 @@ def test_get_program_with_invalid_id(client):
     assert response_data['data'] is None
 
 def test_stop_program(client):
-    """Test the home page route."""
+    """Test stop program route."""
     response = client.post('/blockly/stop')
     assert response.status_code == 200
+
+    response_data = response.json
+    assert response_data['status'] == 'success'
 
 def test_delete_program(client):
     # Add the item
