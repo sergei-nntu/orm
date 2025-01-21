@@ -12,7 +12,7 @@ class BlocklyService(metaclass=Singleton):
     __program_thread = None
 
     __active_block_id = None
-    __active_program_structure = None
+    __current_program_structure = None
 
     __is_running = False
     __should_terminate = False
@@ -61,12 +61,39 @@ class BlocklyService(metaclass=Singleton):
     def get_active_block_id(self):
         return self.__active_block_id
 
-    def set_active_program_structure(self, value):
-        self.__active_program_structure = value
+    def set_current_program_structure(self, value):
+        self.__current_program_structure = value
 
-    # FIXME: active -> current
-    def get_active_program_structure(self):
-        return self.__active_program_structure
+    def get_current_program_structure(self):
+        return self.__current_program_structure
+
+    def save_program_structure(self, structure):
+        self.set_current_program_structure(structure)
+
+        data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data')
+
+        if not os.path.exists(data_dir):
+            raise FileNotFoundError(f"The data dir - {data_dir} doesn't exist")
+
+        file_path = os.path.join(data_dir, 'blockly_program_structure.py')
+        with open(file_path, 'w', encoding='utf-8') as file:
+            file.write(str(structure))
+
+    def get_program_structure(self):
+        structure = self.get_current_program_structure()
+
+        if not structure:
+            data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data')
+
+            if not os.path.exists(data_dir):
+                raise FileNotFoundError(f"The data dir - {data_dir} doesn't exist")
+
+            file_path = os.path.join(data_dir, 'blockly_program_structure.py')
+
+            with open(file_path, 'r', encoding='utf-8') as file:
+                structure = file.read()
+
+        return structure
 
     def write_program_to_file(self, program_code):
         indented_code = textwrap.indent(program_code, '  ')
@@ -83,11 +110,10 @@ class BlocklyService(metaclass=Singleton):
             f"{indented_code}"
         )
 
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        data_dir = os.path.join(base_dir, '..', 'data')
+        data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data')
 
         if not os.path.exists(data_dir):
-            raise FileNotFoundError(f"The dir {data_dir} doesn't exist")
+            raise FileNotFoundError(f"The data dir - {data_dir} doesn't exist")
 
         file_path = os.path.join(data_dir, 'blockly_runtime_program.py')
 

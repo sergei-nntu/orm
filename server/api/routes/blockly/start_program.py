@@ -20,7 +20,7 @@ def start_program():
         blockly = BlocklyService()
         # FIXME:
         # blockly.write_program_to_file(program)
-        blockly.set_active_program_structure(structure)
+        blockly.save_program_structure(structure)
 
         # TODO: check -> is program started or not
         blockly.start_program()
