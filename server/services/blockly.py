@@ -1,4 +1,5 @@
 import os
+import json
 import time
 import textwrap
 import importlib
@@ -70,14 +71,15 @@ class BlocklyService(metaclass=Singleton):
     def save_program_structure(self, structure):
         self.set_current_program_structure(structure)
 
+        # FIXME: duplicate code
         data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data')
 
         if not os.path.exists(data_dir):
             raise FileNotFoundError(f"The data dir - {data_dir} doesn't exist")
 
-        file_path = os.path.join(data_dir, 'blockly_program_structure.py')
+        file_path = os.path.join(data_dir, 'blockly_program_structure.json')
         with open(file_path, 'w', encoding='utf-8') as file:
-            file.write(str(structure))
+            file.write(json.dumps(structure))
 
     def get_program_structure(self):
         structure = self.get_current_program_structure()
@@ -88,7 +90,7 @@ class BlocklyService(metaclass=Singleton):
             if not os.path.exists(data_dir):
                 raise FileNotFoundError(f"The data dir - {data_dir} doesn't exist")
 
-            file_path = os.path.join(data_dir, 'blockly_program_structure.py')
+            file_path = os.path.join(data_dir, 'blockly_program_structure.json')
 
             with open(file_path, 'r', encoding='utf-8') as file:
                 structure = file.read()

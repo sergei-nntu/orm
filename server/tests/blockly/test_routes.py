@@ -16,9 +16,12 @@ def test_start_program(client):
     data = {'program': program, 'structure': structure}
 
     response = client.post('/blockly/start', json=data)
+    response_data = response.json
+    print(response_data)
     assert response.status_code == 200
 
     response_data = response.json
+    print(response_data)
     assert response_data['status'] == 'success'
 
 def test_start_program_without_program_or_structure(client):
@@ -101,3 +104,11 @@ def test_update_program(client):
 
     response = client.patch('/blockly', json=body, query_string=query_params)
     assert response.status_code == 200
+
+def test_get_current_program(client):
+    response = client.get('blockly/current')
+    response_data = response.json
+
+    assert response.status_code == 200
+    assert response_data['status'] == 'success'
+    assert response_data['data'] != {}

@@ -1,11 +1,14 @@
 from api.utils import JsonResponse
+from services import BlocklyService
 
-# FIXME: active -> current
-def get_active_program():
+
+def get_current_program():
     try:
-        print('get_active_program')
 
-        response = JsonResponse(status='success', data={}, message='Request processed successfully')
+        blockly = BlocklyService()
+        program_structure = blockly.get_program_structure()
+
+        response = JsonResponse(status='success', data=program_structure, message='Request processed successfully')
         return response.to_json(200)
 
     except KeyError as e:
