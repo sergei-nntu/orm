@@ -44,6 +44,7 @@ class BlocklyService(metaclass=Singleton):
     def set_active_program_structure(self, structure):
         self.__active_program_structure = structure
 
+    # FIXME: active -> current
     def get_active_program_structure(self):
         return self.__active_program_structure
 

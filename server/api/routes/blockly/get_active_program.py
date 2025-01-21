@@ -1,3 +1,4 @@
+# FIXME: active -> current
 def get_active_program():
     try:
         print('get_active_program')
