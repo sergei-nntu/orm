@@ -5,8 +5,8 @@ from dao import BlocklyDAO
 
 def get_programs():
     try:
-        blockly_dao = BlocklyDAO()
-        programs_data = blockly_dao.get_programs()
+        dao = BlocklyDAO()
+        programs_data = dao.get_programs()
 
         response = JsonResponse(status='success', data=programs_data, message='Request processed successfully')
         return response.to_json(200)
