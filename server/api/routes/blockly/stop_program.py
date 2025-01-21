@@ -1,9 +1,11 @@
 from api.utils import JsonResponse
+from services import BlocklyService
 
 
 def stop_program():
     try:
-        print('stop_program')
+        blockly = BlocklyService()
+        blockly.stop_program()
 
         response = JsonResponse(status='success', data={}, message='Request processed successfully')
         return response.to_json(200)

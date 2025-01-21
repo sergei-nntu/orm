@@ -1,4 +1,5 @@
 import os
+import time
 import textwrap
 import importlib
 from threading import Thread
@@ -25,9 +26,27 @@ class BlocklyService(metaclass=Singleton):
         if self.__program_thread is None or not self.__program_thread.is_alive():
             importlib.reload(blockly_runtime_program)
 
-            # TODO: Add functions to args
-            self.__program_thread = Thread(target=blockly_runtime_program.program, args=())
+            self.__program_thread = Thread(target=blockly_runtime_program.program, args=(self.should_terminate_function, self.set_active_block_id, self.publish_grip_state, self.orm_blockly_delay, self.orm_blockly_set_position, self.orm_blockly_set_gripper_state))
             self.__program_thread.start()
+    
+    def publish_grip_state(self, state):
+        print('publish_grip_state', state)
+        time.sleep(1)
+
+    def orm_blockly_delay(self, ms):
+        time.sleep(ms / 1000)
+
+    def orm_blockly_set_position(self, x, y, z, roll, pitch, yaw):
+        print('orm_blockly_set_position')
+
+    def orm_blockly_set_gripper_state(self, value):
+        print('orm_blockly_set_gripper_state')
+
+    # Test
+    def should_terminate_function(self):
+        return self.__should_terminate
+
+    # --------------------------------------------------
 
     def stop_program(self):
         self.__should_terminate = True
@@ -42,8 +61,14 @@ class BlocklyService(metaclass=Singleton):
     def should_terminate(self):
         return self.__should_terminate
     
-    def set_active_program_structure(self, structure):
-        self.__active_program_structure = structure
+    def set_active_block_id(self, value):
+        self.__active_block_id = value
+
+    def get_active_block_id(self):
+        return self.__active_block_id
+
+    def set_active_program_structure(self, value):
+        self.__active_program_structure = value
 
     # FIXME: active -> current
     def get_active_program_structure(self):

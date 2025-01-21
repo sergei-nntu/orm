@@ -18,9 +18,12 @@ def start_program():
             ).to_json(400)
 
         blockly = BlocklyService()
-
-        blockly.write_program_to_file(program)
+        # FIXME:
+        # blockly.write_program_to_file(program)
         blockly.set_active_program_structure(structure)
+
+        # TODO: check -> is program started or not
+        blockly.start_program()
 
         response = JsonResponse(status='success', data={}, message='Request processed successfully')
         return response.to_json(200)
