@@ -26,8 +26,12 @@ class BlocklyService(metaclass=Singleton):
         if self.__program_thread is None or not self.__program_thread.is_alive():
             importlib.reload(blockly_runtime_program)
 
-            self.__program_thread = Thread(target=blockly_runtime_program.program, args=(self.should_terminate_function, self.set_active_block_id, self.publish_grip_state, self.orm_blockly_delay, self.orm_blockly_set_position, self.orm_blockly_set_gripper_state))
+            self.__program_thread = Thread(target=blockly_runtime_program.program, args=(self.should_terminate, self.set_active_block_id, self.publish_grip_state, self.orm_blockly_delay, self.orm_blockly_set_position, self.orm_blockly_set_gripper_state))
             self.__program_thread.start()
+    
+    def stop_program(self):
+        self.__should_terminate = True
+        self.__is_running = False
     
     def publish_grip_state(self, state):
         print('publish_grip_state', state)
@@ -41,16 +45,6 @@ class BlocklyService(metaclass=Singleton):
 
     def orm_blockly_set_gripper_state(self, value):
         print('orm_blockly_set_gripper_state')
-
-    # Test
-    def should_terminate_function(self):
-        return self.__should_terminate
-
-    # --------------------------------------------------
-
-    def stop_program(self):
-        self.__should_terminate = True
-        self.__is_running = False
 
     def get_active_block_id(self):
         pass
