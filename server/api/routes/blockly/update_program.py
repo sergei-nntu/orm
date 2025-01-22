@@ -15,7 +15,6 @@ def update_program():
             'name': data.get('program_name'),
             'description': data.get('program_description'),
             'structure': data.get('program_structure'),
-            'is_running': data.get('is_running'),
         }
 
         program = SimpleNamespace(**program_data)

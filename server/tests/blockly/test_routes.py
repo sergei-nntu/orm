@@ -130,7 +130,6 @@ def test_save_program(client):
         'program_name': 'Test program name' + str(datetime.now()),
         'program_description': 'Test program description',
         'program_structure': 'Test program structure',
-        'is_running': '0',
     }
 
     response = client.post('/blockly', json=body)
@@ -145,7 +144,6 @@ def test_save_program_without_body_params(client):
     body = {
         'program_description': 'Test program description',
         'program_structure': 'Test program structure',
-        'is_running': '0',
     }
 
     response = client.post('/blockly', json=body)
@@ -186,7 +184,6 @@ def test_update_program(client):
         'program_name': 'Updated program_name' + str(datetime.now()),
         'program_description': 'Updated program_description',
         'program_structure': 'Updated program_structure',
-        'is_running': '0',
     }
 
     response = client.patch('/blockly', json=body, query_string=query_params)

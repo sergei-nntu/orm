@@ -6,8 +6,6 @@ CREATE TABLE programs (
   program_name TEXT UNIQUE NOT NULL,
   program_description TEXT DEFAULT NULL,
   program_structure TEXT NOT NULL,
-
-  is_running INTEGER NOT NULL DEFAULT 0 CHECK (is_running IN (0, 1)),
   
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

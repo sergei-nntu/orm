@@ -12,7 +12,6 @@ def save_program():
         program_name = data.get('program_name')
         program_description = data.get('program_description')
         program_structure = data.get('program_structure')
-        is_running = data.get('is_running')
 
         if not program_name or not program_description or not program_structure:
             return JsonResponse(
@@ -24,7 +23,6 @@ def save_program():
             'name': program_name,
             'description': program_description,
             'structure': program_structure,
-            'is_running': is_running,
         }
 
         program = SimpleNamespace(**program_data)
