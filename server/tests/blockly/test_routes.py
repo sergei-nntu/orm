@@ -7,10 +7,15 @@ from datetime import datetime
 def test_start_program(client):
     """Test the /blockly/start route."""
 
-    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data', 'program.txt'), 'r') as program_file:
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    test_data_dir = os.path.join(base_dir, 'test_data')
+    program_file_path = os.path.join(test_data_dir, 'program.txt')
+    structure_file_path = os.path.join(test_data_dir, 'structure.json')
+
+    with open(program_file_path, 'r') as program_file:
         program = program_file.read()
 
-    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data', 'structure.json'), 'r') as structure_file:
+    with open(structure_file_path, 'r') as structure_file:
         structure = json.load(structure_file)
 
     data = {'program': program, 'structure': structure}
