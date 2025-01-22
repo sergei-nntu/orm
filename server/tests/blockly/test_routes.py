@@ -22,29 +22,30 @@ def test_start_program(client):
 
     response = client.post('/blockly/start', json=data)
     response_data = response.json
-    print(response_data)
-    assert response.status_code == 200
 
-    response_data = response.json
-    print(response_data)
+    print('response_data -> ', response_data)
+
+    assert response.status_code == 200
     assert response_data['status'] == 'success'
 
 def test_start_program_without_program_or_structure(client):
     response = client.post('/blockly/start', json={})
-    assert response.status_code == 400
-
     response_data = response.json
-    
+
+    print('response_data -> ', response_data)
+
+    assert response.status_code == 400
     assert response_data['status'] == 'error'
     assert response_data['message'] == "Both 'program' and 'structure' must be provided in the request"
     assert response_data['data'] is None
 
 def test_get_program_with_invalid_id(client):
     response = client.get('/blockly/99999')
-    assert response.status_code == 400
-
     response_data = response.json
+
+    print('response_data -> ', response_data)
     
+    assert response.status_code == 400
     assert response_data['status'] == 'error'
     assert response_data['message'] == "No program found with the provided ID"
     assert response_data['data'] is None
@@ -52,9 +53,11 @@ def test_get_program_with_invalid_id(client):
 def test_stop_program(client):
     """Test stop program route."""
     response = client.post('/blockly/stop')
-    assert response.status_code == 200
-
     response_data = response.json
+
+    print('response_data -> ', response_data)
+
+    assert response.status_code == 200
     assert response_data['status'] == 'success'
 
 def test_delete_program(client):
@@ -74,6 +77,10 @@ def test_delete_program(client):
 
     # Delete the item
     delete_response = client.delete('/blockly', query_string=query_params)
+    response_data = delete_response.json
+
+    print('response_data -> ', response_data)
+
     assert delete_response.status_code == 200
 
     # Verify the item no longer exists
@@ -81,6 +88,10 @@ def test_delete_program(client):
 
 def test_get_programs(client):
     response = client.get('/blockly')
+    response_data = response.json
+
+    print('response_data -> ', response_data)
+
     assert response.status_code == 200
 
 def test_save_program(client):
@@ -92,9 +103,11 @@ def test_save_program(client):
     }
 
     response = client.post('/blockly', json=body)
-    assert response.status_code == 201
-
     response_data = response.json
+
+    print('response_data -> ', response_data)
+
+    assert response.status_code == 201
     assert response_data['status'] == 'success'
 
 def test_update_program(client):
@@ -108,13 +121,17 @@ def test_update_program(client):
     }
 
     response = client.patch('/blockly', json=body, query_string=query_params)
+    response_data = response.json
+
+    print('response_data -> ', response_data)
+
     assert response.status_code == 200
 
 def test_get_current_program(client):
     response = client.get('blockly/current-program')
     response_data = response.json
 
-    print('test_get_current_program - response_data -> ', response_data)
+    print('response_data -> ', response_data)
 
     assert response.status_code == 200
     assert response_data['status'] == 'success'
@@ -124,7 +141,7 @@ def test_get_current_block_id(client):
     response = client.get('blockly/current-block-id')
     response_data = response.json
 
-    print('test_get_current_block_id - response_data -> ', response_data)
+    print('response_data -> ', response_data)
 
     assert response.status_code == 200
     assert response_data['status'] == 'success'
