@@ -178,7 +178,7 @@ def test_save_program_without_body_params(client):
     assert response_data['message'] == "Both 'program_name', 'program_description' and 'program_structure' must be provided in the request"
 
 def test_update_program(client):
-    query_params = {"id": "14"}
+    query_params = {"id": "0"}
 
     body = {
         'program_name': 'Updated program_name' + str(datetime.now()),
@@ -192,6 +192,73 @@ def test_update_program(client):
     print('response_data -> ', response_data)
 
     assert response.status_code == 200
+
+def test_update_program_without_id(client):
+    body = {
+        'program_name': 'Updated program_name' + str(datetime.now()),
+        'program_description': 'Updated program_description',
+        'program_structure': 'Updated program_structure',
+    }
+
+    response = client.patch('/blockly', json=body)
+    response_data = response.json
+
+    print('response_data -> ', response_data)
+
+    assert response.status_code == 400
+    assert response_data['status'] == 'error'
+    assert response_data['message'] == "The program id should be provided as a query parameter - /blockly?id=0"
+
+def test_update_program_without_name(client):
+    query_params = {"id": "0"}
+
+    body = {
+        'program_description': 'Updated program_description',
+        'program_structure': 'Updated program_structure',
+    }
+
+    response = client.patch('/blockly', json=body, query_string=query_params)
+    response_data = response.json
+
+    print('response_data -> ', response_data)
+
+    assert response.status_code == 400
+    assert response_data['status'] == 'error'
+    assert response_data['message'] == "Both 'program_name', 'program_description' and 'program_structure' must be provided in the request"
+
+def test_update_program_without_description(client):
+    query_params = {"id": "0"}
+
+    body = {
+        'program_name': 'Updated program_name' + str(datetime.now()),
+        'program_structure': 'Updated program_structure',
+    }
+
+    response = client.patch('/blockly', json=body, query_string=query_params)
+    response_data = response.json
+
+    print('response_data -> ', response_data)
+
+    assert response.status_code == 400
+    assert response_data['status'] == 'error'
+    assert response_data['message'] == "Both 'program_name', 'program_description' and 'program_structure' must be provided in the request"
+
+def test_update_program_without_structure(client):
+    query_params = {"id": "0"}
+
+    body = {
+        'program_name': 'Updated program_name' + str(datetime.now()),
+        'program_description': 'Updated program_description',
+    }
+
+    response = client.patch('/blockly', json=body, query_string=query_params)
+    response_data = response.json
+
+    print('response_data -> ', response_data)
+
+    assert response.status_code == 400
+    assert response_data['status'] == 'error'
+    assert response_data['message'] == "Both 'program_name', 'program_description' and 'program_structure' must be provided in the request"
 
 def test_get_current_program(client):
     response = client.get('blockly/current-program')
