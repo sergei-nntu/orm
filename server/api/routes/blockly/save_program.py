@@ -9,12 +9,22 @@ def save_program():
     try:
         data = request.get_json()
 
-        # TODO: validate request data
+        program_name = data.get('program_name')
+        program_description = data.get('program_description')
+        program_structure = data.get('program_structure')
+        is_running = data.get('is_running')
+
+        if not program_name or not program_description or not program_structure:
+            return JsonResponse(
+                status="error",
+                message=f"Both 'program_name', 'program_description' and 'program_structure' must be provided in the request"
+            ).to_json(400)
+
         program_data = {
-            'name': data.get('program_name'),
-            'description': data.get('program_description'),
-            'structure': data.get('program_structure'),
-            'is_running': data.get('is_running'),
+            'name': program_name,
+            'description': program_description,
+            'structure': program_structure,
+            'is_running': is_running,
         }
 
         program = SimpleNamespace(**program_data)

@@ -6,7 +6,6 @@ from datetime import datetime
 
 def test_start_program(client):
     """Test the /blockly/start route."""
-
     base_dir = os.path.dirname(os.path.abspath(__file__))
     test_data_dir = os.path.join(base_dir, 'test_data')
     program_file_path = os.path.join(test_data_dir, 'program.txt')
@@ -28,7 +27,45 @@ def test_start_program(client):
     assert response.status_code == 200
     assert response_data['status'] == 'success'
 
-def test_start_program_without_program_or_structure(client):
+def test_start_program_without_program(client):
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    test_data_dir = os.path.join(base_dir, 'test_data')
+    structure_file_path = os.path.join(test_data_dir, 'structure.json')
+
+    with open(structure_file_path, 'r') as structure_file:
+        structure = structure_file.read()
+
+    data = {'structure': structure}
+    response = client.post('/blockly/start', json=data)
+    response_data = response.json
+
+    print('response_data -> ', response_data)
+
+    assert response.status_code == 400
+    assert response_data['status'] == 'error'
+    assert response_data['message'] == "Both 'program' and 'structure' must be provided in the request"
+    assert response_data['data'] is None
+
+def test_start_program_without_structure(client):
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    test_data_dir = os.path.join(base_dir, 'test_data')
+    program_file_path = os.path.join(test_data_dir, 'program.txt')
+
+    with open(program_file_path, 'r') as program_file:
+        program = program_file.read()
+
+    data = {'program': program}
+    response = client.post('/blockly/start', json=data)
+    response_data = response.json
+
+    print('response_data -> ', response_data)
+
+    assert response.status_code == 400
+    assert response_data['status'] == 'error'
+    assert response_data['message'] == "Both 'program' and 'structure' must be provided in the request"
+    assert response_data['data'] is None
+
+def test_start_program_without_params(client):
     response = client.post('/blockly/start', json={})
     response_data = response.json
 
@@ -103,6 +140,44 @@ def test_save_program(client):
 
     assert response.status_code == 201
     assert response_data['status'] == 'success'
+
+def test_save_program_without_body_params(client):
+    body = {
+        'program_description': 'Test program description',
+        'program_structure': 'Test program structure',
+        'is_running': '0',
+    }
+
+    response = client.post('/blockly', json=body)
+    response_data = response.json
+
+    print('response_data -> ', response_data)
+
+    assert response.status_code == 400
+    assert response_data['status'] == 'error'
+    assert response_data['message'] == "Both 'program_name', 'program_description' and 'program_structure' must be provided in the request"
+
+    body.pop('program_description')
+
+    response = client.post('/blockly', json=body)
+    response_data = response.json
+
+    print('response_data -> ', response_data)
+
+    assert response.status_code == 400
+    assert response_data['status'] == 'error'
+    assert response_data['message'] == "Both 'program_name', 'program_description' and 'program_structure' must be provided in the request"
+
+    body.pop('program_structure')
+
+    response = client.post('/blockly', json=body)
+    response_data = response.json
+
+    print('response_data -> ', response_data)
+
+    assert response.status_code == 400
+    assert response_data['status'] == 'error'
+    assert response_data['message'] == "Both 'program_name', 'program_description' and 'program_structure' must be provided in the request"
 
 def test_update_program(client):
     query_params = {"id": "14"}
