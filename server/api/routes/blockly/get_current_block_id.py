@@ -7,7 +7,7 @@ def get_current_block_id():
         blockly = BlocklyService()
         id = blockly.get_current_block_id()
 
-        response = JsonResponse(status='success', data=id, message='Request processed successfully')
+        response = JsonResponse(status='success', data={'id': id}, message='Request processed successfully')
         return response.to_json(200)
 
     except KeyError as e:
