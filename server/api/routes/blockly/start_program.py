@@ -18,8 +18,8 @@ def start_program():
             ).to_json(400)
 
         blockly = BlocklyService()
-        # FIXME:
-        # blockly.write_program_to_file(program)
+        # FIXME: those reload the server 
+        blockly.write_program_to_file(program)
         blockly.save_program_structure(structure)
 
         # TODO: check -> is program started or not

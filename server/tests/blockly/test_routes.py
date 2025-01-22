@@ -16,7 +16,7 @@ def test_start_program(client):
         program = program_file.read()
 
     with open(structure_file_path, 'r') as structure_file:
-        structure = json.load(structure_file)
+        structure = structure_file.read()
 
     data = {'program': program, 'structure': structure}
 
@@ -111,7 +111,7 @@ def test_update_program(client):
     assert response.status_code == 200
 
 def test_get_current_program(client):
-    response = client.get('blockly/current')
+    response = client.get('blockly/current-program')
     response_data = response.json
 
     assert response.status_code == 200

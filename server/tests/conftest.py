@@ -1,7 +1,7 @@
 import pytest
 from api import create_app
 
-# NOTE: use command `pytest` in cli to run all tests
+# NOTE: use command `pytest -v` in cli to run all tests
 @pytest.fixture
 def app():
     # NOTE: Use test config by adding a parameter in the create_app() function

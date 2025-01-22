@@ -1,6 +1,6 @@
 import os
 
-DEBUG = True
+DEBUG = False
 HOST = '0.0.0.0'
 PORT = 5001
 SECRET_KEY = ''

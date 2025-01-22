@@ -1,5 +1,4 @@
 import os
-import json
 import time
 import textwrap
 import importlib
@@ -12,7 +11,7 @@ class BlocklyService(metaclass=Singleton):
 
     __program_thread = None
 
-    __active_block_id = None
+    __current_block_id = None
     __current_program_structure = None
 
     __is_running = False
@@ -27,13 +26,15 @@ class BlocklyService(metaclass=Singleton):
         if self.__program_thread is None or not self.__program_thread.is_alive():
             importlib.reload(blockly_runtime_program)
 
-            self.__program_thread = Thread(target=blockly_runtime_program.program, args=(self.should_terminate, self.set_active_block_id, self.publish_grip_state, self.orm_blockly_delay, self.orm_blockly_set_position, self.orm_blockly_set_gripper_state))
+            self.__program_thread = Thread(target=blockly_runtime_program.program, args=(self.should_terminate, self.set_current_block_id, self.publish_grip_state, self.orm_blockly_delay, self.orm_blockly_set_position, self.orm_blockly_set_gripper_state))
             self.__program_thread.start()
-    
+
     def stop_program(self):
         self.__should_terminate = True
         self.__is_running = False
     
+    # --------------------------------------------------
+    # FIXME: This code should be contained in another class with some base approach
     def publish_grip_state(self, state):
         print('publish_grip_state', state)
         time.sleep(1)
@@ -43,31 +44,31 @@ class BlocklyService(metaclass=Singleton):
 
     def orm_blockly_set_position(self, x, y, z, roll, pitch, yaw):
         print('orm_blockly_set_position')
+        time.sleep(1)
 
     def orm_blockly_set_gripper_state(self, value):
         print('orm_blockly_set_gripper_state')
-
-    def get_active_block_id(self):
-        pass
+    # --------------------------------------------------
 
     def is_program_running(self):
         return self.__is_running
 
     def should_terminate(self):
         return self.__should_terminate
-    
-    def set_active_block_id(self, value):
-        self.__active_block_id = value
 
-    def get_active_block_id(self):
-        return self.__active_block_id
+    def set_current_block_id(self, id):
+        self.__current_block_id = id
 
-    def set_current_program_structure(self, value):
-        self.__current_program_structure = value
+    def get_current_block_id(self):
+        return self.__current_block_id
+
+    def set_current_program_structure(self, structure):
+        self.__current_program_structure = structure
 
     def get_current_program_structure(self):
         return self.__current_program_structure
 
+    # FIXME: json is already there
     def save_program_structure(self, structure):
         self.set_current_program_structure(structure)
 
@@ -79,7 +80,7 @@ class BlocklyService(metaclass=Singleton):
 
         file_path = os.path.join(data_dir, 'blockly_program_structure.json')
         with open(file_path, 'w', encoding='utf-8') as file:
-            file.write(json.dumps(structure))
+            file.write(structure)
 
     def get_program_structure(self):
         structure = self.get_current_program_structure()
