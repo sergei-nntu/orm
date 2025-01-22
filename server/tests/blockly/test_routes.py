@@ -114,6 +114,18 @@ def test_get_current_program(client):
     response = client.get('blockly/current-program')
     response_data = response.json
 
+    print('test_get_current_program - response_data -> ', response_data)
+
+    assert response.status_code == 200
+    assert response_data['status'] == 'success'
+    assert response_data['data'] != {}
+
+def test_get_current_block_id(client):
+    response = client.get('blockly/current-block-id')
+    response_data = response.json
+
+    print('test_get_current_block_id - response_data -> ', response_data)
+
     assert response.status_code == 200
     assert response_data['status'] == 'success'
     assert response_data['data'] != {}
