@@ -68,31 +68,19 @@ class BlocklyService(metaclass=Singleton):
     def get_current_program_structure(self):
         return self.__current_program_structure
 
-    # FIXME: json is already there
     def save_program_structure(self, structure):
         self.set_current_program_structure(structure)
 
-        # FIXME: duplicate code
-        data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data')
-
-        if not os.path.exists(data_dir):
-            raise FileNotFoundError(f"The data dir - {data_dir} doesn't exist")
-
-        file_path = os.path.join(data_dir, 'blockly_program_structure.json')
+        file_path = self.get_file_path('blockly_program_structure.json')
         with open(file_path, 'w', encoding='utf-8') as file:
+            # TODO: check, provided structure is json
             file.write(structure)
 
     def get_program_structure(self):
         structure = self.get_current_program_structure()
 
         if not structure:
-            data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data')
-
-            if not os.path.exists(data_dir):
-                raise FileNotFoundError(f"The data dir - {data_dir} doesn't exist")
-
-            file_path = os.path.join(data_dir, 'blockly_program_structure.json')
-
+            file_path = self.get_file_path('blockly_program_structure.json')
             with open(file_path, 'r', encoding='utf-8') as file:
                 structure = file.read()
 
@@ -113,12 +101,19 @@ class BlocklyService(metaclass=Singleton):
             f"{indented_code}"
         )
 
-        data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data')
-
-        if not os.path.exists(data_dir):
-            raise FileNotFoundError(f"The data dir - {data_dir} doesn't exist")
-
-        file_path = os.path.join(data_dir, 'blockly_runtime_program.py')
-
+        file_path = self.get_file_path('blockly_runtime_program.py')
         with open(file_path, 'w', encoding='utf-8') as file:
             file.write(program_template)
+
+    def get_file_path(self, target_file):
+        """Constructs and returns the full path to the target file within the data directory."""
+        data_dir = self.get_data_directory()
+        file_path = os.path.join(data_dir, target_file)
+        return file_path
+
+    def get_data_directory(self):
+        """Returns the path to the data directory."""
+        data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data')
+        if not os.path.exists(data_dir):
+            raise FileNotFoundError(f"The data directory '{data_dir}' does not exist")
+        return data_dir

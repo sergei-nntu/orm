@@ -60,22 +60,10 @@ def test_stop_program(client):
     assert response.status_code == 200
     assert response_data['status'] == 'success'
 
-def test_delete_program(client):
-    # Add the item
-    body = {
-        'program_name': 'Test program name' + str(datetime.now()),
-        'program_description': 'Test program description',
-        'program_structure': 'Test program structure',
-        'is_running': '0',
-    }
-    add_response = client.post('/blockly', json=body)
-    assert add_response.status_code == 201
-
-    # FIXME: unique_id should be gotten from add_response
-    unique_id = 11
+def test_delete_program_with_nonexistent_id(client):
+    unique_id = 99999
     query_params = {"id": unique_id}
 
-    # Delete the item
     delete_response = client.delete('/blockly', query_string=query_params)
     response_data = delete_response.json
 
@@ -83,8 +71,14 @@ def test_delete_program(client):
 
     assert delete_response.status_code == 200
 
-    # Verify the item no longer exists
-    # TODO: get the item by id
+    get_response = client.get(f'/blockly/{unique_id}')
+    response_data = get_response.json
+
+    print('response_data -> ', response_data)
+
+    assert get_response.status_code == 400 
+    assert response_data['status'] == 'error' 
+    assert response_data['message'] == 'No program found with the provided ID'
 
 def test_get_programs(client):
     response = client.get('/blockly')

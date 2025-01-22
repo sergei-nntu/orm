@@ -18,7 +18,8 @@ def start_program():
             ).to_json(400)
 
         blockly = BlocklyService()
-        # FIXME: those reload the server 
+
+        # NOTE: this code below reloads the server. It'll be working correctly without reloading if debug is False in the config file 
         blockly.write_program_to_file(program)
         blockly.save_program_structure(structure)
 
