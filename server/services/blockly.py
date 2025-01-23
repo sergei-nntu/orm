@@ -15,19 +15,32 @@ class BlocklyService(metaclass=Singleton):
     __current_program_structure = None
 
     __is_running = False
-    __should_terminate = False
+    __should_terminate = True
 
     def start_program(self):
-        from data import blockly_runtime_program
-
-        self.__is_running = True
-        self.__should_terminate = False
-
         if self.__program_thread is None or not self.__program_thread.is_alive():
+            from data import blockly_runtime_program
             importlib.reload(blockly_runtime_program)
 
-            self.__program_thread = Thread(target=blockly_runtime_program.program, args=(self.should_terminate, self.set_current_block_id, self.publish_grip_state, self.orm_blockly_delay, self.orm_blockly_set_position, self.orm_blockly_set_gripper_state))
+            self.__is_running = True
+            self.__should_terminate = False
+
+            self.__program_thread = Thread(
+                target=blockly_runtime_program.program,
+                args=(
+                    self.should_terminate,
+                    self.set_current_block_id,
+                    self.publish_grip_state,
+                    self.orm_blockly_delay,
+                    self.orm_blockly_set_position,
+                    self.orm_blockly_set_gripper_state
+                )
+            )
             self.__program_thread.start()
+
+            return True, "Program started successfully."
+        else:
+            return False, "Program is already running."
 
     def stop_program(self):
         self.__should_terminate = True

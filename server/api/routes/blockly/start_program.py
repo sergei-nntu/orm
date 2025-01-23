@@ -23,11 +23,12 @@ def start_program():
         blockly.write_program_to_file(program)
         blockly.save_program_structure(structure)
 
-        # TODO: check -> is program started or not
-        blockly.start_program()
+        is_started, message = blockly.start_program()
 
-        response = JsonResponse(status='success', data={}, message='Request processed successfully')
-        return response.to_json(200)
+        status = 'success' if is_started else 'error'
+        status_code = 200 if is_started else 400
+
+        return JsonResponse(status=status, data={}, message=message).to_json(status_code)
 
     except KeyError as e:
             error_message = f"Data access error: {str(e)}"

@@ -1,5 +1,4 @@
 import os
-import json
 
 from datetime import datetime
 
@@ -26,6 +25,34 @@ def test_start_program(client):
 
     assert response.status_code == 200
     assert response_data['status'] == 'success'
+    assert response_data['message'] == 'Program started successfully.'
+
+def test_start_program_when_already_running(client):
+    """Test the /blockly/start route."""
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    test_data_dir = os.path.join(base_dir, 'test_data')
+    program_file_path = os.path.join(test_data_dir, 'program.txt')
+    structure_file_path = os.path.join(test_data_dir, 'structure.json')
+
+    with open(program_file_path, 'r') as program_file:
+        program = program_file.read()
+
+    with open(structure_file_path, 'r') as structure_file:
+        structure = structure_file.read()
+
+    data = {'program': program, 'structure': structure}
+
+    response = client.post('/blockly/start', json=data)
+    response_data = response.json
+
+    response = client.post('/blockly/start', json=data)
+    response_data = response.json
+
+    print('response_data -> ', response_data)
+
+    assert response.status_code == 400
+    assert response_data['status'] == 'error'
+    assert response_data['message'] == 'Program is already running.'
 
 def test_start_program_without_program(client):
     base_dir = os.path.dirname(os.path.abspath(__file__))
