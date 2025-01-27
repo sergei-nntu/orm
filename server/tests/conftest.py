@@ -11,6 +11,7 @@ def app():
     #     'DATABASE': db_path,
     # }
 
+    # TODO: create a test config
     app = create_app()
 
     yield app
