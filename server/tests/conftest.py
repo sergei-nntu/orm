@@ -1,6 +1,7 @@
 import pytest
 from api import create_app
 
+
 # NOTE: use command `pytest -v` in cli to run all tests
 @pytest.fixture
 def app():
@@ -14,9 +15,11 @@ def app():
 
     yield app
 
+
 @pytest.fixture
 def client(app):
     return app.test_client()
+
 
 @pytest.fixture
 def runner(app):

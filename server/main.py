@@ -5,7 +5,7 @@ from rclpy.logging import get_logger
 from api import create_app
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     rclpy.init()
 
     logger = get_logger(__name__)
@@ -14,8 +14,8 @@ if __name__ == '__main__':
     try:
         app = create_app()
 
-        host = app.config.get('HOST', '0.0.0.0')
-        port = app.config.get('PORT', 5000)
+        host = app.config.get("HOST", "0.0.0.0")
+        port = app.config.get("PORT", 5000)
 
         logger.info(f"Running on {host}:{port}")
 

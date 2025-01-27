@@ -10,17 +10,21 @@ from .delete_program import delete_program
 from .get_current_program import get_current_program
 from .get_current_block_id import get_current_block_id
 
-blockly = Blueprint('blockly', __name__)
+blockly = Blueprint("blockly", __name__)
 
-blockly.add_url_rule('/blockly/<int:id>', view_func=get_program, methods=['GET'])
+blockly.add_url_rule("/blockly/<int:id>", view_func=get_program, methods=["GET"])
 
-blockly.add_url_rule('/blockly', view_func=get_programs, methods=['GET'])
-blockly.add_url_rule('/blockly', view_func=save_program, methods=['POST'])
-blockly.add_url_rule('/blockly', view_func=update_program, methods=['PATCH'])
-blockly.add_url_rule('/blockly', view_func=delete_program, methods=['DELETE'])
+blockly.add_url_rule("/blockly", view_func=get_programs, methods=["GET"])
+blockly.add_url_rule("/blockly", view_func=save_program, methods=["POST"])
+blockly.add_url_rule("/blockly", view_func=update_program, methods=["PATCH"])
+blockly.add_url_rule("/blockly", view_func=delete_program, methods=["DELETE"])
 
-blockly.add_url_rule('/blockly/stop', view_func=stop_program, methods=['POST']) 
-blockly.add_url_rule('/blockly/start', view_func=start_program, methods=['POST'])
+blockly.add_url_rule("/blockly/stop", view_func=stop_program, methods=["POST"])
+blockly.add_url_rule("/blockly/start", view_func=start_program, methods=["POST"])
 
-blockly.add_url_rule('/blockly/current-program', view_func=get_current_program, methods=['GET'])
-blockly.add_url_rule('/blockly/current-block-id', view_func=get_current_block_id, methods=['GET'])
+blockly.add_url_rule(
+    "/blockly/current-program", view_func=get_current_program, methods=["GET"]
+)
+blockly.add_url_rule(
+    "/blockly/current-block-id", view_func=get_current_block_id, methods=["GET"]
+)

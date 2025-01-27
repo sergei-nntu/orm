@@ -23,8 +23,8 @@ def create_app(test_config=None, instance_config=False):
         app.config.update(test_config)
 
     # TODO: define default params
-    db_path = app.config.get('DB_PATH')
-    schema_path = app.config.get('SCHEMA_PATH')
+    db_path = app.config.get("DB_PATH")
+    schema_path = app.config.get("SCHEMA_PATH")
 
     # Initialize the Db instance and store it in app context
     app.db = Db(db_path, schema_path)
@@ -41,10 +41,11 @@ def create_app(test_config=None, instance_config=False):
 
     @app.teardown_request
     def teardown_request(exception):
-        g.pop('db', None)
+        g.pop("db", None)
 
     # Register blueprints right here
     from .routes import register_blueprints
+
     register_blueprints(app)
 
     # ensure the instance folder exists
