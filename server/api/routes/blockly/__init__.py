@@ -1,1 +1,1 @@
-from .blockly import blockly
+from .blockly_blueprint import blockly

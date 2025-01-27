@@ -21,14 +21,14 @@ class Db:
 
                         conn.commit()
 
-                        if (cursor.description):
+                        if cursor.description:
                             response = cursor.fetchall()
                         else:
                             response = cursor.lastrowid
 
                         return response
             except Exception as e:
-                print('DB Exception', e)
+                print("DB Exception", e)
                 pass
 
     def initialize_db(self):
@@ -38,18 +38,18 @@ class Db:
 
     def create_schema(self):
         try:
-            print('Database not found. Creating database from', self.schema_path)
+            print("Database not found. Creating database from", self.schema_path)
 
-            with open(self.schema_path, 'r') as file:
+            with open(self.schema_path, "r") as file:
                 schema = file.read()
 
-            statements = schema.split(';')
+            statements = schema.split(";")
             for statement in statements:
                 statement = statement.strip()
                 if statement:
                     self.execute(statement)
 
-            print('Database successfully created!')
+            print("Database successfully created!")
         except Exception as e:
-            print('DB Exception', e)
+            print("DB Exception", e)
             pass

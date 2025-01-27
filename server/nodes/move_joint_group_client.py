@@ -8,8 +8,8 @@ from we_r2_arm_interfaces.action import MoveJointGroup
 
 class MoveJointGroupClient(Node):
     def __init__(self):
-        super().__init__('move_joint_group_client')
-        self._action_client = ActionClient(self, MoveJointGroup, 'move_joint_group')
+        super().__init__("move_joint_group_client")
+        self._action_client = ActionClient(self, MoveJointGroup, "move_joint_group")
 
     def send_goal(self, joint_position_group, joints_position):
         goal_msg = MoveJointGroup.Goal()
@@ -17,7 +17,7 @@ class MoveJointGroupClient(Node):
         goal_msg.joint_position_group = joint_position_group
 
         self.get_logger().info(
-            f'Sending goal: joints_position={joints_position}, joint_position_group={joint_position_group}'
+            f"Sending goal: joints_position={joints_position}, joint_position_group={joint_position_group}"
         )
 
         self._action_client.wait_for_server()
@@ -30,19 +30,21 @@ class MoveJointGroupClient(Node):
     def goal_response_callback(self, future):
         goal_handle = future.result()
         if not goal_handle.accepted:
-            self.get_logger().info('Goal rejected')
+            self.get_logger().info("Goal rejected")
             return
 
-        self.get_logger().info('Goal accepted')
+        self.get_logger().info("Goal accepted")
         self._get_result_future = goal_handle.get_result_async()
         self._get_result_future.add_done_callback(self.get_result_callback)
 
     def feedback_callback(self, feedback_msg):
-        self.get_logger().info(f'Received feedback:')
+        self.get_logger().info(f"Received feedback:")
 
     def get_result_callback(self, future):
         result = future.result().result
-        self.get_logger().info(f'Result: success={result.success}, message={result.message}')
+        self.get_logger().info(
+            f"Result: success={result.success}, message={result.message}"
+        )
         rclpy.shutdown()
 
 
@@ -54,21 +56,21 @@ def main(args=None):
     node = None
 
     try:
-        logger.info('Starting move joint group client...')
+        logger.info("Starting move joint group client...")
 
         node = MoveJointGroupClient()
 
-        node.send_goal('arm', [1.17, 0.0, 0.0, 0.14])
+        node.send_goal("arm", [1.17, 0.0, 0.0, 0.14])
 
         rclpy.spin(node)
     except KeyboardInterrupt:
         logger.info("Application interrupted by user.")
     except Exception as e:
-        logger.error('Move joint group client failed...', e)
+        logger.error("Move joint group client failed...", e)
     finally:
         if node is not None:
             node.destroy_node()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
